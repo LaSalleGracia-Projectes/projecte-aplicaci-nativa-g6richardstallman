@@ -128,7 +128,7 @@ class EditarEventoViewModel : ViewModel() {
                     val evento = response.body()?.evento
                     if (evento != null) {
                         Log.d(TAG, "Datos de evento recibidos exitosamente:")
-                        Log.d(TAG, "ID: ${evento.id}, Título: ${evento.titulo}")
+                        Log.d(TAG, "ID: ${ evento.idEvento}, Título: ${evento.titulo}")
                         Log.d(TAG, "Fecha: ${evento.fechaEvento}, Hora: ${evento.hora}")
                         Log.d(TAG, "Categoría: ${evento.categoria}, Online: ${evento.esOnline}")
                         

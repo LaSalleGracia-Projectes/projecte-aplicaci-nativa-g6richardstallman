@@ -308,15 +308,18 @@ fun MisEventosScreen(
                             // Agregar log especializado para el evento EVENTOSINFOTO
                             if (evento.titulo.contains("EVENTOSINFOTO", ignoreCase = true)) {
                                 Log.d("MisEventosScreen", "Evento especial encontrado: '${evento.titulo}'")
-                                Log.d("MisEventosScreen", "Detalles de EVENTOSINFOTO - ID: ${evento.id} (${evento.id.javaClass.name}), Categoría: ${evento.categoria}")
+                                Log.d("MisEventosScreen", "Detalles de EVENTOSINFOTO - ID: ${evento.getEventoId()}, Categoría: ${evento.categoria}")
                             }
                             
                             EventoCardConAcciones(
                                 evento = evento,
                                 onClick = { 
-                                    // Usar una llamada directa a onEventoClick para garantizar consistencia
-                                    Log.d("MisEventosScreen", "Card clickeada - ID: ${evento.id}, Título: ${evento.titulo}")
-                                    onEventoClick(evento) 
+                                    val eventoId = evento.getEventoId()
+                                    if (eventoId > 0) {
+                                        navController.navigate("evento/$eventoId")
+                                    } else {
+                                        // Opcional: mostrar un Toast de error
+                                    }
                                 },
                                 onEditClick = { onEditEventoClick(evento) },
                                 onDeleteClick = { 
@@ -339,14 +342,14 @@ fun MisEventosScreen(
 
 // Función para editar evento con manejo mejorado de errores
 private fun editarEvento(evento: Evento, navController: NavController) {
-    // Obtener el ID correcto
+    // Obtener el ID correcto usando getEventoId()
     val eventoId = evento.getEventoId()
     
     // Logging detallado para debugging
     Log.d("EditEvento", "======== INICIANDO EDICIÓN DE EVENTO ========")
-    Log.d("EditEvento", "ID del evento: $eventoId (${eventoId.javaClass.name})")
+    Log.d("EditEvento", "ID del evento: $eventoId")
     Log.d("EditEvento", "Título: ${evento.titulo}")
-    Log.d("EditEvento", "ID original: ${evento.id}, idEvento: ${evento.idEvento}")
+    Log.d("EditEvento", "ID original: ${evento.idEvento}, idEvento: ${evento.idEvento}")
     
     // Validar ID y navegar directamente, siguiendo el mismo patrón que funciona en detalle
     try {

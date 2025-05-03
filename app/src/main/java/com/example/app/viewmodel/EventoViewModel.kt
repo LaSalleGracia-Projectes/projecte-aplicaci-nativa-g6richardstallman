@@ -180,7 +180,7 @@ class EventoViewModel : ViewModel() {
                             
                             // Log de IDs de eventos para depuración
                             misEventos.forEachIndexed { index, evento ->
-                                Log.d("MIS_EVENTOS", "Evento[$index] - ID: ${evento.id}, IDEvento: ${evento.idEvento}, getEventoId(): ${evento.getEventoId()}, Título: ${evento.titulo}")
+                                Log.d("MIS_EVENTOS", "Evento[$index] - ID: ${evento.idEvento}, IDEvento: ${evento.idEvento}, getEventoId(): ${evento.getEventoId()}, Título: ${evento.titulo}")
                             }
                             
                             if (misEventos.isEmpty()) {
@@ -321,7 +321,7 @@ class EventoViewModel : ViewModel() {
                 // Obtener token desde SessionManager
                 val token = SessionManager.getToken()
                 
-                Log.d("DELETE_EVENTO", "Iniciando eliminación del evento ID: ${evento.id}")
+                Log.d("DELETE_EVENTO", "Iniciando eliminación del evento ID: ${evento.idEvento}")
                 
                 // Verificar si hay token válido
                 if (token.isNullOrEmpty()) {
@@ -347,7 +347,7 @@ class EventoViewModel : ViewModel() {
                     Log.d("DELETE_EVENTO", """
                         Realizando petición DELETE:
                         - Ruta: /api/eventos/$eventoId
-                        - ID original: ${evento.id}
+                        - ID original: ${evento.idEvento}
                         - IDEvento: ${evento.idEvento}
                         - getEventoId(): $eventoId
                         - Título: ${evento.titulo}

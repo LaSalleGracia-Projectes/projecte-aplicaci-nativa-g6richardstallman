@@ -123,11 +123,12 @@ class EventoDetailViewModel : ViewModel() {
                     val eventoData = response.body()?.evento
                     
                     if (eventoData != null) {
-                        Log.d("EventoDetailViewModel", "Evento recibido - ID: ${eventoData.id}, Título: ${eventoData.titulo}")
+                        Log.d("EventoDetailViewModel", "Evento recibido - ID: ${eventoData.idEvento}, Título: ${eventoData.titulo}")
                         
-                        // Verificar la validez del evento recibido
-                        if (eventoData.id <= 0) {
-                            Log.e("EventoDetailViewModel", "Evento recibido con ID inválido: ${eventoData.id}")
+                        // Verificar la validez del evento recibido usando getEventoId()
+                        val eventoId = eventoData.getEventoId()
+                        if (eventoId <= 0) {
+                            Log.e("EventoDetailViewModel", "Evento recibido con ID inválido: $eventoId")
                             setError("El evento recibido tiene un ID inválido")
                             return@launch
                         }
@@ -138,6 +139,10 @@ class EventoDetailViewModel : ViewModel() {
                         
                         // Cargar tipos de entrada detallados
                         loadTiposEntrada(id)
+                        
+                        Log.d("EventoDetailViewModel", "idEvento: ${eventoData.idEvento}")
+                        
+                        Log.d("EventoDetailViewModel", "Evento recibido: $eventoData")
                     } else {
                         Log.e("EventoDetailViewModel", "Respuesta exitosa pero evento es null")
                         setError("No se encontró la información del evento")
@@ -282,9 +287,9 @@ class EventoDetailViewModel : ViewModel() {
                     return@launch
                 }
                 
-                val eventoId = evento?.id
-                if (eventoId == null) {
-                    Log.e("EventoDetailViewModel", "Error: ID del evento es nulo")
+                val eventoId = evento?.getEventoId()
+                if (eventoId == null || eventoId <= 0) {
+                    Log.e("EventoDetailViewModel", "Error: ID del evento es nulo (idEvento)")
                     _mensajeCompra.value = "Error al identificar el evento"
                     _compraProcesando.value = false
                     return@launch

@@ -82,10 +82,8 @@ fun OrganizadorDetailScreen(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     
-    // Calcular la URL del avatar usando la función global
-    val avatarUrl = remember(organizador, avatarUrlFromViewModel) {
-        getOrganizadorAvatarUrl(organizadorData, avatarUrlFromViewModel)
-    }
+    // Calcular la URL del avatar usando solo el campo avatarUrl o user.avatarUrl
+    val avatarUrl = organizadorData.avatarUrl ?: organizadorData.user?.avatarUrl
 
     Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
         Scaffold(
@@ -177,29 +175,38 @@ fun OrganizadorDetailScreen(
                                     modifier = Modifier.size(50.dp)
                                 )
                             } else {
-                                SubcomposeAsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(organizadorData.obtenerAvatarUrl())
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Avatar del organizador",
-                                    contentScale = ContentScale.Crop,
-                                    loading = {
-                                        CircularProgressIndicator(
-                                            color = primaryColor,
-                                            modifier = Modifier.padding(40.dp)
-                                        )
-                                    },
-                                    error = {
-                                        Icon(
-                                            Icons.Default.Person,
-                                            contentDescription = "Avatar por defecto",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(80.dp)
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxSize()
-                                )
+                                if (!avatarUrl.isNullOrEmpty()) {
+                                    SubcomposeAsyncImage(
+                                        model = ImageRequest.Builder(LocalContext.current)
+                                            .data(avatarUrl)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Avatar del organizador",
+                                        contentScale = ContentScale.Crop,
+                                        loading = {
+                                            CircularProgressIndicator(
+                                                color = primaryColor,
+                                                modifier = Modifier.padding(40.dp)
+                                            )
+                                        },
+                                        error = {
+                                            Icon(
+                                                Icons.Default.Person,
+                                                contentDescription = "Avatar por defecto",
+                                                tint = Color.White,
+                                                modifier = Modifier.size(80.dp)
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Avatar por defecto",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(80.dp)
+                                    )
+                                }
                             }
                         }
                         

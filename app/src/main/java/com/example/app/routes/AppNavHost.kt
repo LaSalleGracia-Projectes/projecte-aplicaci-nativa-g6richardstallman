@@ -169,26 +169,13 @@ fun AppNavHost(
         }
         
         composable(
-            route = Routes.EventoDetalle.route,
-            arguments = listOf(
-                navArgument("eventoId") { 
-                    type = NavType.StringType 
-                    nullable = false
-                    defaultValue = "-1"
-                }
-            )
+            route = "evento/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.StringType })
         ) { backStackEntry ->
-            Log.d("Navigation", "Entering EventoDetailScreen composition")
-            val eventoId = backStackEntry.arguments?.getString("eventoId") ?: "-1"
-            Log.d("Navigation", "EventoDetailScreen received eventoId: $eventoId")
-            
-            LaunchedEffect(eventoId) {
-                Log.d("Navigation", "EventoDetailScreen LaunchedEffect triggered with eventoId: $eventoId")
-            }
-            
+            val eventoId = backStackEntry.arguments?.getString("id")?.toIntOrNull() ?: -1
             EventoDetailScreen(
                 navController = navController,
-                eventoId = eventoId
+                eventoId = eventoId.toString()
             )
         }
         

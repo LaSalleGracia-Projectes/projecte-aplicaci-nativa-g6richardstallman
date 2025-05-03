@@ -4,8 +4,7 @@ import com.google.gson.annotations.SerializedName
 import android.util.Log
 
 data class Evento(
-    @SerializedName("id") val id: Int = 0,
-    @SerializedName("idEvento") val idEvento: Int = 0,
+    @SerializedName(value = "id", alternate = ["idEvento"]) val idEvento: Int? = null,
     @SerializedName("nombreEvento") val titulo: String,
     @SerializedName("descripcion") val descripcion: String,
     @SerializedName("imagen") val imagen: String,
@@ -15,18 +14,13 @@ data class Evento(
     @SerializedName("ubicacion") val ubicacion: String,
     @SerializedName("categoria") val categoria: String,
     @SerializedName("lugar") val lugar: String,
-    @SerializedName("precio") val precio: Double,
+    @SerializedName("precio") val precio: Double = 0.0,
     @SerializedName("organizador") val organizador: OrganizadorEvento?,
     @SerializedName("isFavorito") val isFavorito: Boolean = false,
     @SerializedName("entradas") val entradas: List<TipoEntrada> = emptyList(),
     @SerializedName("es_online") val esOnline: Boolean = false
 ) {
-    // Función para obtener el ID real, independientemente de si viene como "id" o "idEvento"
-    fun getEventoId(): Int {
-        val efectiveId = if (idEvento > 0) idEvento else id
-        Log.d("Evento", "getEventoId() - id: $id, idEvento: $idEvento, efectivo: $efectiveId")
-        return efectiveId
-    }
+    fun getEventoId(): Int = idEvento ?: -1
 }
 
 data class OrganizadorEvento(
@@ -49,7 +43,6 @@ data class TipoEntrada(
     @SerializedName("es_ilimitado") val esIlimitado: Boolean = false
 )
 
-// Extensión para obtener la URL de la imagen del evento
 fun Evento.getImageUrl(): String {
     Log.d("Evento", "getImageUrl() - ID: ${this.getEventoId()}, tipo: ${this.getEventoId().javaClass.name}")
     

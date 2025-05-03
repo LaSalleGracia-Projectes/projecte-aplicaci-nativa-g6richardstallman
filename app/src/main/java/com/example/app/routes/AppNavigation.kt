@@ -323,7 +323,7 @@ fun HomeScreenWithBottomNav(
         ) {
             EventosScreen(
                 onEventoClick = { evento ->
-                    val route = Routes.EventoDetalle.createRoute(evento.id.toString())
+                    val route = Routes.EventoDetalle.createRoute( evento.idEvento.toString())
                     navController.navigate(route)
                 },
                 navController = navController
