@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import com.example.app.view.CrearEventoScreen
 import com.example.app.viewmodel.RegisterViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app.routes.safeTokenDisplay
 
 // Variable global para rastrear si el usuario está autenticado
 private var isUserAuthenticated = false
@@ -172,19 +173,25 @@ fun AppNavigation(
             val registerViewModel = viewModel<RegisterViewModel>()
             
             // Obtener datos guardados desde la pantalla anterior
-            val savedEmail = navController.previousBackStackEntry?.savedStateHandle?.get<String>("user_email") ?: ""
-            val savedName = navController.previousBackStackEntry?.savedStateHandle?.get<String>("user_name") ?: ""
-            val savedLastName = navController.previousBackStackEntry?.savedStateHandle?.get<String>("user_lastname") ?: ""
-            val savedLastName2 = navController.previousBackStackEntry?.savedStateHandle?.get<String>("user_lastname2") ?: ""
-            val isFromGoogleLogin = navController.previousBackStackEntry?.savedStateHandle?.get<Boolean>("google_login") ?: false
-            val token = navController.previousBackStackEntry?.savedStateHandle?.get<String>("token") ?: ""
+            val savedEmail = navController.currentBackStackEntry?.savedStateHandle?.get<String>("user_email") ?: ""
+            val savedName = navController.currentBackStackEntry?.savedStateHandle?.get<String>("user_name") ?: ""
+            val savedLastName = navController.currentBackStackEntry?.savedStateHandle?.get<String>("user_lastname") ?: ""
+            val savedLastName2 = navController.currentBackStackEntry?.savedStateHandle?.get<String>("user_lastname2") ?: ""
+            val isFromGoogleLogin = navController.currentBackStackEntry?.savedStateHandle?.get<Boolean>("google_login") ?: false
+            val token = navController.currentBackStackEntry?.savedStateHandle?.get<String>("token") ?: ""
             
             Log.d("REGISTRO_DEBUG", "======= PANTALLA PARTICIPANTE =======")
-            Log.d("REGISTRO_DEBUG", "Datos recibidos: Email=$savedEmail, Nombre=$savedName")
-            Log.d("REGISTRO_DEBUG", "¿Viene de Google? $isFromGoogleLogin, Token recibido: ${token.safeTokenDisplay()}")
+            Log.d("REGISTRO_DEBUG", "Datos recibidos:")
+            Log.d("REGISTRO_DEBUG", "Email: $savedEmail")
+            Log.d("REGISTRO_DEBUG", "Nombre: $savedName")
+            Log.d("REGISTRO_DEBUG", "Apellido1: $savedLastName")
+            Log.d("REGISTRO_DEBUG", "Apell1ido2: $savedLastName2")
+            Log.d("REGISTRO_DEBUG", "¿Viene de Google? $isFromGoogleLogin")
+            Log.d("REGISTRO_DEBUG", "Token recibido: ${token.safeTokenDisplay()}")
             
             // Si vienen datos de un login con Google, actualizamos el viewModel
             LaunchedEffect(Unit) {
+                Log.d("REGISTRO_DEBUG", "Iniciando LaunchedEffect para cargar datos de Google")
                 if (savedEmail.isNotEmpty() && isFromGoogleLogin) {
                     Log.d("REGISTRO_DEBUG", "Cargando datos de Google en RegisterViewModel")
                     
@@ -202,10 +209,16 @@ fun AppNavigation(
                     Log.d("REGISTRO_DEBUG", "Email: ${registerViewModel.email}")
                     Log.d("REGISTRO_DEBUG", "Nombre: ${registerViewModel.name}")
                     Log.d("REGISTRO_DEBUG", "Apellido1: ${registerViewModel.apellido1}")
+                    Log.d("REGISTRO_DEBUG", "Apellido2: ${registerViewModel.apellido2}")
+                    Log.d("REGISTRO_DEBUG", "Token: ${registerViewModel.googleToken?.safeTokenDisplay()}")
+                    Log.d("REGISTRO_DEBUG", "¿Es de Google Auth? ${registerViewModel.isFromGoogleAuth}")
                     Log.d("REGISTRO_DEBUG", "Datos de Google cargados en RegisterViewModel")
                 } else if (isFromGoogleLogin) {
                     // Si falta información importante
                     Log.e("REGISTRO_DEBUG", "ERROR: Faltan datos importantes para Google Auth")
+                    Log.e("REGISTRO_DEBUG", "Email vacío: ${savedEmail.isEmpty()}")
+                    Log.e("REGISTRO_DEBUG", "Nombre vacío: ${savedName.isEmpty()}")
+                    Log.e("REGISTRO_DEBUG", "Token vacío: ${token.isEmpty()}")
                     registerViewModel.setError("No se recibieron todos los datos necesarios del login con Google")
                 }
             }
@@ -317,10 +330,4 @@ fun HomeScreenWithBottomNav(
             )
         }
     }
-}
-
-// Función de utilidad para manejar tokens de forma segura
-private fun String?.safeTokenDisplay(maxLength: Int = 10): String {
-    if (this.isNullOrEmpty()) return "vacío"
-    return this.substring(0, minOf(maxLength, this.length)) + "..."
 }

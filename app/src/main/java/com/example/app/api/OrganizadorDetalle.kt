@@ -13,4 +13,25 @@ data class OrganizadorDetalle(
     @SerializedName("user") val user: com.example.app.model.UserInfo?,
     @SerializedName("avatar_url") val avatarUrl: String? = null,
     @SerializedName("is_favorite") val isFavorite: Boolean = false
-) 
+) {
+    // Función para obtener la URL del avatar de forma segura
+    fun obtenerAvatarUrl(): String {
+        return when {
+            !avatarUrl.isNullOrEmpty() -> {
+                if (avatarUrl.startsWith("http")) {
+                    avatarUrl
+                } else {
+                    "https://api.example.com/storage/$avatarUrl"
+                }
+            }
+            user?.avatarUrl != null -> {
+                if (user.avatarUrl.startsWith("http")) {
+                    user.avatarUrl
+                } else {
+                    "https://api.example.com/storage/${user.avatarUrl}"
+                }
+            }
+            else -> "https://ui-avatars.com/api/?name=${nombre.take(2)}&background=0D8ABC&color=fff&size=256"
+        }
+    }
+} 

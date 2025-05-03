@@ -261,7 +261,7 @@ interface ApiService {
     suspend fun loginWithGoogle(@Query("email") email: String): Response<LoginResponse>
 
     @POST("api/auth/google/mobile")
-    suspend fun loginWithGoogleMobile(@Body request: GoogleAuthRequest): Response<LoginResponse>
+    suspend fun handleGoogleMobile(@Body request: GoogleAuthRequest): Response<LoginResponse>
 
     @POST("api/auth/google/mobile/register")
     suspend fun registerWithGoogleMobile(@Body request: GoogleAuthRequest): Response<LoginResponse>
@@ -279,6 +279,9 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") idEntrada: Int
     ): Response<ResponseBody>
+
+    @GET("/api/avatar")
+    suspend fun getAvatar(@Header("Authorization") token: String): Response<AvatarResponse>
 }
 
 data class FavoritosResponse(
@@ -311,4 +314,9 @@ data class OrganizadorResponse(
     @SerializedName("message") val message: String,
     @SerializedName("organizador") val organizador: OrganizadorDetalle,
     @SerializedName("status") val status: String
+)
+
+data class AvatarResponse(
+    val avatar: String?,
+    val avatar_url: String?
 )

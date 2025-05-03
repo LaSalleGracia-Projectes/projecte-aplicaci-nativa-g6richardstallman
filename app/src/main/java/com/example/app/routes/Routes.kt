@@ -17,17 +17,8 @@ sealed class Routes(val route: String) {
     object HistorialCompras : Routes("historial_compras")
     
     // Ruta con parámetros
-    object EventoDetalle : Routes("evento_detalle/{eventoId}") {
-        fun createRoute(eventoId: String): String {
-            val id = eventoId.trim()
-            if (!id.isValidEventoId()) {
-                val errorMsg = id.getEventoIdErrorMessage()
-                android.util.Log.e("Routes", errorMsg)
-                throw IllegalArgumentException(errorMsg)
-            }
-            android.util.Log.d("Routes", "Creando ruta para detalle de evento: $id")
-            return "evento_detalle/$id"
-        }
+    object EventoDetalle : Routes("evento/{id}") {
+        fun createRoute(id: String) = "evento/$id"
     }
     
     object EditarEvento : Routes("editar_evento/{eventoId}") {
@@ -58,4 +49,10 @@ sealed class Routes(val route: String) {
     object EventosCategoria : Routes("eventos_categoria/{categoria}") {
         fun createRoute(categoria: String) = "eventos_categoria/$categoria"
     }
+}
+
+// Función de utilidad para manejar tokens de forma segura
+fun String?.safeTokenDisplay(maxLength: Int = 10): String {
+    if (this.isNullOrEmpty()) return "vacío"
+    return this.substring(0, minOf(maxLength, this.length)) + "..."
 }

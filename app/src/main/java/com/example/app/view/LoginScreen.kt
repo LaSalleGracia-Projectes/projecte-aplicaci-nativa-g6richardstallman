@@ -41,7 +41,9 @@ import com.example.app.viewmodel.TicketsViewModel
 import com.example.app.viewmodel.ForgotPasswordViewModel
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.LaunchedEffect
+import com.example.app.routes.Routes
 import com.example.app.util.SessionManager
+import com.example.app.routes.safeTokenDisplay
 
 @Composable
 fun LoginScreen(
@@ -49,7 +51,9 @@ fun LoginScreen(
     onNavigateToForgotPassword: () -> Unit,
     navController: NavController,
     viewModel: LoginViewModel = viewModel(),
-    ticketsViewModel: TicketsViewModel = viewModel()
+    ticketsViewModel: TicketsViewModel = viewModel(
+        factory = TicketsViewModelFactory(LocalContext.current.applicationContext as android.app.Application)
+    )
 ) {
     // Estados básicos
     val isLoading = viewModel.isLoading
@@ -107,27 +111,40 @@ fun LoginScreen(
             Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Token recibido: ${viewModel.token?.take(10)}...")
             
             // Guardamos datos relevantes en el RegisterViewModel a través de la navegación
-            navController.currentBackStackEntry?.savedStateHandle?.set("google_login", true)
             val userEmail = viewModel.user?.email ?: ""
             val userName = viewModel.user?.nombre ?: ""
             val userLastName = viewModel.user?.apellido1 ?: ""
             val userLastName2 = viewModel.user?.apellido2 ?: ""
             val token = viewModel.token ?: ""
             
-            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Pasando datos a pantalla de registro: Email=$userEmail, Nombre=$userName")
-            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Pasando token: ${token.take(10)}...")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Datos a guardar:")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Email=$userEmail")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Nombre=$userName")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Apellido1=$userLastName")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Apellido2=$userLastName2")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Token=${token.take(10)}...")
             
-            navController.currentBackStackEntry?.savedStateHandle?.set("user_email", userEmail)
-            navController.currentBackStackEntry?.savedStateHandle?.set("user_name", userName)
-            navController.currentBackStackEntry?.savedStateHandle?.set("user_lastname", userLastName)
-            navController.currentBackStackEntry?.savedStateHandle?.set("user_lastname2", userLastName2)
-            navController.currentBackStackEntry?.savedStateHandle?.set("token", token)
+            // Guardar datos en el savedStateHandle antes de navegar
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Guardando datos en savedStateHandle")
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("google_login", true)
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("user_email", userEmail)
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("user_name", userName)
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("user_lastname", userLastName)
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("user_lastname2", userLastName2)
+            navController.getBackStackEntry("register/participante").savedStateHandle.set("token", token)
             
-            // Navegamos al registro/pantalla de participante
+            // Verificar que los datos se guardaron correctamente
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Verificación de datos guardados:")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Email guardado: ${navController.getBackStackEntry("register/participante").savedStateHandle.get<String>("user_email")}")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Nombre guardado: ${navController.getBackStackEntry("register/participante").savedStateHandle.get<String>("user_name")}")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Google login guardado: ${navController.getBackStackEntry("register/participante").savedStateHandle.get<Boolean>("google_login")}")
+            Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Token guardado: ${navController.getBackStackEntry("register/participante").savedStateHandle.get<String>("token")?.safeTokenDisplay()}")
+            
+            // Navegar a la pantalla de registro
             Log.d("LOGIN_DEBUG", "=== FLUJO GOOGLE ===: Iniciando navegación a register/participante")
-            navController.navigate("register/participante") {
-                // Mantén el login en la pila para poder volver si es necesario
-                popUpTo("login") { inclusive = false }
+            navController.navigate(Routes.RegisterParticipante.route) {
+                // Mantener la pantalla de login en la pila para poder volver
+                popUpTo(Routes.Login.route) { inclusive = false }
             }
             
             // Reseteamos el flag para evitar navegaciones no deseadas

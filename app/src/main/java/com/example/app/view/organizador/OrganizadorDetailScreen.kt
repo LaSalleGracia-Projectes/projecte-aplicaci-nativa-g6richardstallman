@@ -178,8 +178,8 @@ fun OrganizadorDetailScreen(
                                 )
                             } else {
                                 SubcomposeAsyncImage(
-                                    model = ImageRequest.Builder(context)
-                                        .data(avatarUrl)
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(organizadorData.obtenerAvatarUrl())
                                         .crossfade(true)
                                         .build(),
                                     contentDescription = "Avatar del organizador",

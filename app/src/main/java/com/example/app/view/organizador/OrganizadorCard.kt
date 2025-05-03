@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.app.model.Organizador
+import coil.compose.SubcomposeAsyncImage
 
 @Composable
 fun OrganizadorCard(
@@ -49,19 +51,31 @@ fun OrganizadorCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Avatar del organizador
-            Image(
-                painter = rememberAsyncImagePainter(
-                    ImageRequest.Builder(LocalContext.current)
-                        .data(organizador.obtenerAvatarUrl())
-                        .crossfade(true)
-                        .build()
-                ),
+            SubcomposeAsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(organizador.obtenerAvatarUrl())
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Avatar de ${organizador.nombre}",
+                contentScale = ContentScale.Crop,
+                loading = {
+                    CircularProgressIndicator(
+                        color = primaryColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                error = {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = "Avatar por defecto",
+                        tint = Color.White,
+                        modifier = Modifier.size(30.dp)
+                    )
+                },
                 modifier = Modifier
                     .size(60.dp)
                     .clip(CircleShape)
-                    .background(Color.LightGray),
-                contentScale = ContentScale.Crop
+                    .background(Color.LightGray)
             )
             
             // Información del organizador

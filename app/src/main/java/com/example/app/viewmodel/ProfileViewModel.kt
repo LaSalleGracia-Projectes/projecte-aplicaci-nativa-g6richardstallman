@@ -18,6 +18,7 @@ import android.content.Context
 import com.example.app.api.DeleteAccountRequest
 import com.google.gson.Gson
 import retrofit2.Response
+import kotlinx.coroutines.flow.StateFlow
 
 class ProfileViewModel : ViewModel() {
     private val TAG = "ProfileViewModel"
@@ -25,14 +26,6 @@ class ProfileViewModel : ViewModel() {
     // Estado del perfil
     var profileData by mutableStateOf<ProfileData?>(null)
         private set
-    
-    // Estado de datos de usuario simplificado para reemplazar _userData
-    private val _userData = MutableStateFlow(UserData())
-    val userData = _userData.asStateFlow()
-    
-    // Estado para controlar si los datos están cargados
-    private val _userDataLoaded = MutableStateFlow(false)
-    val userDataLoaded = _userDataLoaded.asStateFlow()
     
     // Estado de edición
     var isEditing by mutableStateOf(false)
@@ -98,7 +91,7 @@ class ProfileViewModel : ViewModel() {
                 clearError()
                 
                 // Obtener token
-                val token = SessionManager.getToken()
+                val token = com.example.app.util.SessionManager.getToken()
                 Log.d("ProfileViewModel", "Token obtenido del SessionManager: $token")
                 
                 if (token.isNullOrEmpty()) {
@@ -107,89 +100,28 @@ class ProfileViewModel : ViewModel() {
                     return@launch
                 }
                 
-                Log.d("ProfileViewModel", "Intentando obtener información del usuario primero con /api/user")
-                
-                // Intentar primero con el endpoint /api/user
-                try {
-                    val userResponse = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.getUser("Bearer $token")
-                    }
-                    
-                    if (userResponse.isSuccessful) {
-                        val user = userResponse.body()
-                        Log.d("ProfileViewModel", "Respuesta exitosa de /api/user: $user")
-                        
-                        if (user != null) {
-                            // Crear un ProfileData a partir del User
-                            profileData = ProfileData(
-                                id = user.id as Int?,
-                                nombre = user.nombre,
-                                apellido1 = user.apellido1,
-                                apellido2 = user.apellido2,
-                                email = user.email,
-                                role = user.role,
-                                // Los demás campos quedarán como null inicialmente
-                            )
-                            
-                            // Inicializar campos editables
-                            initEditableFields()
-                            
-                            // Si conseguimos la información básica, intentamos obtener los detalles completos
-                            Log.d("ProfileViewModel", "Obteniendo detalles adicionales del perfil...")
-                            loadProfileDetails(token)
-                            return@launch
-                        }
-                    } else {
-                        Log.e("ProfileViewModel", "Error al obtener usuario: ${userResponse.code()}")
-                        // No hacemos return aquí para que intente con el siguiente endpoint
-                    }
-                } catch (e: Exception) {
-                    Log.e("ProfileViewModel", "Error al llamar a /api/user: ${e.message}", e)
-                    // Continuamos con el siguiente endpoint
-                }
-                
-                // Si llegamos aquí, el primer intento falló, intentamos con /api/profile
-                Log.d("ProfileViewModel", "Intentando con endpoint alternativo /api/profile")
-                loadProfileFromProfileEndpoint(token)
-            } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Error general al cargar perfil: ${e.message}", e)
-                setError("Error de conexión: ${e.message}")
-            } finally {
-                isLoading = false
-            }
-        }
-    }
-    
-    private fun loadProfileFromProfileEndpoint(token: String) {
-        viewModelScope.launch {
-            try {
+                // Solo una llamada a /api/profile
                 Log.d("ProfileViewModel", "Realizando petición a getProfile con token: Bearer ${token.take(10)}...")
-                
-                // Realizar la petición
                 val response = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.getProfile("Bearer $token")
+                        com.example.app.api.RetrofitClient.apiService.getProfile("Bearer $token")
                     } catch (e: Exception) {
                         Log.e("ProfileViewModel", "Error al realizar petición HTTP a /api/profile: ${e.message}", e)
                         return@withContext null
                     }
                 }
                 
-                // Procesar la respuesta
                 withContext(Dispatchers.Main) {
                     if (response == null) {
                         setError("Error de conexión al servidor")
                         return@withContext
                     }
-                    
                     if (response.isSuccessful) {
                         val profileResponse = response.body()
                         Log.d("ProfileViewModel", "Respuesta exitosa de /api/profile: ${profileResponse?.message}")
-                        
                         if (profileResponse != null && profileResponse.data != null) {
                             profileData = profileResponse.data
                             Log.d("ProfileViewModel", "Datos de perfil recibidos: $profileData")
-                            // Inicializar campos editables
                             initEditableFields()
                         } else {
                             Log.e("ProfileViewModel", "Cuerpo de respuesta vacío o sin datos")
@@ -198,11 +130,9 @@ class ProfileViewModel : ViewModel() {
                     } else {
                         val errorBody = response.errorBody()?.string()
                         Log.e("ProfileViewModel", "Error ${response.code()}: $errorBody")
-                        
                         when (response.code()) {
                             401 -> {
                                 setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente")
-                                // Marcar que se debería navegar a login
                                 _shouldNavigateToLogin.value = true
                             }
                             403 -> setError("No tienes permiso para acceder a esta información")
@@ -213,67 +143,10 @@ class ProfileViewModel : ViewModel() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Error en loadProfileFromProfileEndpoint: ${e.message}", e)
+                Log.e("ProfileViewModel", "Error general al cargar perfil: ${e.message}", e)
                 setError("Error de conexión: ${e.message}")
-            }
-        }
-    }
-    
-    private fun loadProfileDetails(token: String) {
-        viewModelScope.launch {
-            try {
-                Log.d("ProfileViewModel", "Cargando detalles adicionales del perfil con /api/profile")
-                
-                // Realizar la petición a /api/profile para obtener datos completos
-                val response = withContext(Dispatchers.IO) {
-                    try {
-                        RetrofitClient.apiService.getProfile("Bearer $token")
-                    } catch (e: Exception) {
-                        Log.e("ProfileViewModel", "Error al obtener detalles del perfil: ${e.message}", e)
-                        return@withContext null
-                    }
-                }
-                
-                if (response != null && response.isSuccessful) {
-                    val profileResponse = response.body()
-                    
-                    if (profileResponse != null && profileResponse.data != null) {
-                        Log.d("ProfileViewModel", "Detalles obtenidos correctamente: ${profileResponse.data}")
-                        
-                        // Actualizar solo los campos específicos del rol, manteniendo los datos básicos
-                        val currentData = profileData
-                        if (currentData != null) {
-                            profileData = currentData.copy(
-                                // Mantener datos básicos
-                                id = currentData.id,
-                                nombre = currentData.nombre,
-                                apellido1 = currentData.apellido1,
-                                apellido2 = currentData.apellido2,
-                                email = currentData.email,
-                                role = currentData.role,
-                                
-                                // Actualizar datos específicos
-                                dni = profileResponse.data.dni,
-                                telefono = profileResponse.data.telefono,
-                                nombreOrganizacion = profileResponse.data.nombreOrganizacion,
-                                telefonoContacto = profileResponse.data.telefonoContacto
-                            )
-                            
-                            // Actualizar los campos editables con los nuevos datos
-                            initEditableFields()
-                        } else {
-                            // Si no hay datos básicos (caso improbable), usar los datos completos
-                            profileData = profileResponse.data
-                            initEditableFields()
-                        }
-                    } else {
-                        Log.w("ProfileViewModel", "No se pudieron obtener detalles específicos")
-                    }
-                } else {
-                    Log.w("ProfileViewModel", "Error al obtener detalles: ${response?.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e("ProfileViewModel", "Error general al cargar detalles: ${e.message}", e)
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -313,7 +186,7 @@ class ProfileViewModel : ViewModel() {
                 clearError()
                 
                 // Obtener token
-                val token = SessionManager.getToken()
+                val token = com.example.app.util.SessionManager.getToken()
                 if (token.isNullOrEmpty()) {
                     setError("No se ha iniciado sesión")
                     return@launch
@@ -348,7 +221,7 @@ class ProfileViewModel : ViewModel() {
                 try {
                     // Realizar la petición de actualización
                     val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.updateProfile(
+                        com.example.app.api.RetrofitClient.apiService.updateProfile(
                             "Bearer $token",
                             updateData
                         )
@@ -444,17 +317,16 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 // Limpiar datos de perfil y sesión
-                _userData.value = UserData()
-                _userDataLoaded.value = false
+                com.example.app.util.SessionManager.clearSession()
                 
                 // Obtener token actual para el logout
-                val token = "Bearer ${SessionManager.getToken() ?: ""}"
+                val token = "Bearer ${com.example.app.util.SessionManager.getToken() ?: ""}"
                 Log.d(TAG, "Token para logout: ${token.takeLast(10)}...")
                 
                 // Llamar al API de logout
                 try {
                     val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.logoutUser(token)
+                        com.example.app.api.RetrofitClient.apiService.logoutUser(token)
                     }
                     if (response.isSuccessful) {
                         Log.d(TAG, "Logout exitoso en el API")
@@ -468,7 +340,7 @@ class ProfileViewModel : ViewModel() {
                 Log.e(TAG, "Excepción durante logout: ${e.message}")
             } finally {
                 // Siempre limpiar sesión y navegar a login independientemente de errores
-                SessionManager.clearSession()
+                com.example.app.util.SessionManager.clearSession()
                 Log.d(TAG, "Sesión limpiada localmente")
                 
                 withContext(Dispatchers.Main) {
@@ -493,11 +365,11 @@ class ProfileViewModel : ViewModel() {
                 Log.d("ProfileViewModel", "Iniciando proceso de logout directo")
                 
                 // Limpiar la sesión local inmediatamente
-                SessionManager.clearSession()
+                com.example.app.util.SessionManager.clearSession()
                 Log.d("ProfileViewModel", "Sesión limpiada localmente")
                 
                 // Obtener token antes de limpiarlo (si es posible)
-                val token = SessionManager.getToken()
+                val token = com.example.app.util.SessionManager.getToken()
                 if (token.isNullOrEmpty()) {
                     Log.d("ProfileViewModel", "No hay token, cerrando sesión y navegando directamente")
                     withContext(Dispatchers.Main) {
@@ -510,7 +382,7 @@ class ProfileViewModel : ViewModel() {
                 try {
                     Log.d("ProfileViewModel", "Llamando al endpoint de logout")
                     val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.logoutUser("Bearer $token")
+                        com.example.app.api.RetrofitClient.apiService.logoutUser("Bearer $token")
                     }
                     
                     if (response.isSuccessful) {
@@ -547,7 +419,7 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 Log.d("ProfileViewModel", "Iniciando logout en segundo plano")
-                val token = SessionManager.getToken()
+                val token = com.example.app.util.SessionManager.getToken()
                 
                 if (token.isNullOrEmpty()) {
                     Log.d("ProfileViewModel", "No hay token para logout en segundo plano")
@@ -556,7 +428,7 @@ class ProfileViewModel : ViewModel() {
                 
                 try {
                     Log.d("ProfileViewModel", "Llamando al API de logout en segundo plano")
-                    val response = RetrofitClient.apiService.logoutUser("Bearer $token")
+                    val response = com.example.app.api.RetrofitClient.apiService.logoutUser("Bearer $token")
                     
                     if (response.isSuccessful) {
                         Log.d("ProfileViewModel", "Logout en segundo plano exitoso")
@@ -598,7 +470,7 @@ class ProfileViewModel : ViewModel() {
                 }
                 
                 // Obtener token
-                val token = SessionManager.getToken()
+                val token = com.example.app.util.SessionManager.getToken()
                 if (token.isNullOrEmpty()) {
                     Log.e(TAG, "Error: No hay token disponible")
                     setError("No se ha iniciado sesión")
@@ -615,7 +487,7 @@ class ProfileViewModel : ViewModel() {
                 // Realizar la petición
                 val response = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.changePassword("Bearer $token", passwordData)
+                        com.example.app.api.RetrofitClient.apiService.changePassword("Bearer $token", passwordData)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error HTTP al cambiar contraseña: ${e.message}", e)
                         return@withContext null
@@ -683,14 +555,14 @@ class ProfileViewModel : ViewModel() {
         }
         
         // Verificar token antes de continuar
-        if (!SessionManager.hasValidToken()) {
+        if (!com.example.app.util.SessionManager.hasValidToken()) {
             Log.d(TAG, "No hay token válido para eliminar cuenta, navegando a login")
             _shouldNavigateToLogin.value = true
             return
         }
         
         // Obtener token
-        val token = SessionManager.getToken()
+        val token = com.example.app.util.SessionManager.getToken()
         
         viewModelScope.launch {
             try {
@@ -707,7 +579,7 @@ class ProfileViewModel : ViewModel() {
                     
                     // Llamar al endpoint para eliminar la cuenta
                     val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.deleteAccount(
+                        com.example.app.api.RetrofitClient.apiService.deleteAccount(
                             "Bearer $token",
                             deleteRequest
                         )
@@ -778,19 +650,19 @@ class ProfileViewModel : ViewModel() {
         Log.d(TAG, "Ejecutando eliminación de cuenta confirmada con implementación hardcodeada")
         
         // 1. Limpiar sesión directamente sin esperar (forzar limpieza)
-        SessionManager.clearSessionSync()
+        com.example.app.util.SessionManager.clearSessionSync()
         
         // 2. Acceso directo a las variables internas de SessionManager para asegurar la limpieza
         try {
             // Acceder directamente al campo mediante reflexión como último recurso
-            val sessionManagerClass = SessionManager::class.java
+            val sessionManagerClass = com.example.app.util.SessionManager::class.java
             val cachedTokenField = sessionManagerClass.getDeclaredField("cachedToken")
             cachedTokenField.isAccessible = true
-            cachedTokenField.set(SessionManager, null)
+            cachedTokenField.set(com.example.app.util.SessionManager, null)
             
             val cachedRoleField = sessionManagerClass.getDeclaredField("cachedRole")
             cachedRoleField.isAccessible = true
-            cachedRoleField.set(SessionManager, null)
+            cachedRoleField.set(com.example.app.util.SessionManager, null)
             
             Log.d(TAG, "Variables internas de SessionManager limpiadas por reflexión")
         } catch (e: Exception) {
@@ -798,9 +670,9 @@ class ProfileViewModel : ViewModel() {
         }
         
         // 3. Doble verificación para asegurar que todo está limpio
-        if (SessionManager.getToken() != null) {
+        if (com.example.app.util.SessionManager.getToken() != null) {
             Log.w(TAG, "¡ALERTA! El token aún no está limpio, forzando limpieza nuevamente")
-            SessionManager.clearSessionSync()
+            com.example.app.util.SessionManager.clearSessionSync()
         }
         
         // 4. Forzar navegación a login inmediatamente y sin esperar

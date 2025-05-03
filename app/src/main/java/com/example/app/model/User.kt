@@ -40,7 +40,9 @@ data class User(
     @ColumnInfo(name = "updated_at")
     val updatedAt: String? = null,
     
-    @SerializedName("avatar_url")
-    @ColumnInfo(name = "avatar_url")
-    val avatarUrl: String? = null
-)
+    @SerializedName("avatar")
+    val avatar: String? = null
+) {
+    val avatarUrl: String?
+        get() = avatar
+}

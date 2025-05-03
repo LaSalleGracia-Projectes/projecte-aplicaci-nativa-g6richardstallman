@@ -1,6 +1,7 @@
 package com.example.app.view
 
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,10 +41,14 @@ import com.example.app.viewmodel.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.text.KeyboardOptions
 import com.example.app.routes.BottomNavigationBar
 import kotlinx.coroutines.delay
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.example.app.R
+import coil.compose.rememberAsyncImagePainter
 
 // Colores consistentes con la app y la marca
 private val primaryColor = Color(0xFFE53935)  // Rojo principal del logo usado en otras pantallas
@@ -76,7 +82,6 @@ fun ProfileScreen(
     LaunchedEffect(Unit) {
         val token = com.example.app.util.SessionManager.getToken()
         if (token.isNullOrEmpty()) {
-            Log.d("ProfileScreen", "No hay token válido, redirigiendo a login inmediatamente")
             hasValidToken.value = false
             navController.navigate(com.example.app.routes.Routes.Login.route) {
                 popUpTo(0) { inclusive = true }
@@ -151,6 +156,12 @@ fun ProfileScreen(
             )
             showSnackbar = false
         }
+    }
+    
+    val avatarUrl = profileData?.avatarUrl
+
+    LaunchedEffect(avatarUrl) {
+        // Eliminado log innecesario
     }
     
     Scaffold(
@@ -277,23 +288,37 @@ fun ProfileScreen(
                                     .padding(20.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                // Avatar con color de la marca
-                                Surface(
-                                    modifier = Modifier
-                                        .size(120.dp)
-                                        .padding(8.dp),
-                                    shape = RoundedCornerShape(percent = 50),
-                                    color = primaryColor.copy(alpha = 0.15f),
-                                    border = BorderStroke(2.dp, primaryColor.copy(alpha = 0.5f))
-                                ) {
-                                    Icon(
-                                        Icons.Default.Person,
-                                        contentDescription = null,
+                                // Avatar recibido del backend
+                                if (!avatarUrl.isNullOrEmpty()) {
+                                    androidx.compose.foundation.Image(
+                                        painter = rememberAsyncImagePainter(avatarUrl),
+                                        contentDescription = "Avatar del usuario",
                                         modifier = Modifier
-                                            .padding(24.dp)
-                                            .size(64.dp),
-                                        tint = primaryColor
+                                            .size(120.dp)
+                                            .padding(8.dp)
+                                            .clip(CircleShape),
+                                        alignment = Alignment.Center,
+                                        contentScale = ContentScale.Crop
                                     )
+                                } else {
+                                    // Icono de estrella por defecto
+                                    Surface(
+                                        modifier = Modifier
+                                            .size(120.dp)
+                                            .padding(8.dp),
+                                        shape = RoundedCornerShape(percent = 50),
+                                        color = primaryColor.copy(alpha = 0.15f),
+                                        border = BorderStroke(2.dp, primaryColor.copy(alpha = 0.5f))
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Star,
+                                            contentDescription = "Avatar por defecto",
+                                            modifier = Modifier
+                                                .padding(24.dp)
+                                                .size(64.dp),
+                                            tint = primaryColor
+                                        )
+                                    }
                                 }
                                 
                                 // Nombre completo
@@ -1579,7 +1604,7 @@ fun ActionsButtonsSection(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        "Cuenta eliminada con éxito",
+                        text = "Cuenta eliminada con éxito",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         textAlign = TextAlign.Center
@@ -1588,7 +1613,7 @@ fun ActionsButtonsSection(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        "Gracias por haber usado nuestra aplicación",
+                        text = "Gracias por haber usado nuestra aplicación",
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,
                         color = textSecondaryColor

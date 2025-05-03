@@ -12,7 +12,8 @@ data class LoginResponse(
     @SerializedName("token_type") val tokenType: String? = null,
     @SerializedName("role") val role: String? = null,
     @SerializedName("userRole") val userRole: String? = null,
-    @SerializedName("user_role") val userRoleAlt: String? = null
+    @SerializedName("user_role") val userRoleAlt: String? = null,
+    @SerializedName("needs_registration") val needsRegistration: Boolean? = null
 )
 
 data class Auth(
