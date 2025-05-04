@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -73,6 +74,21 @@ fun MisTicketsScreen(
     
     // Inicializar el calendarHelper
     val context = LocalContext.current
+    
+    // Inicializar el helper de calendario si es necesario
+    LaunchedEffect(key1 = Unit) {
+        try {
+            Log.d("MisTicketsScreen", "Inicializando GoogleCalendarHelper")
+            if (viewModel.calendarHelper == null) {
+                viewModel.calendarHelper = GoogleCalendarHelper(context.applicationContext)
+                Log.d("MisTicketsScreen", "GoogleCalendarHelper inicializado correctamente")
+            } else {
+                Log.d("MisTicketsScreen", "GoogleCalendarHelper ya estaba inicializado")
+            }
+        } catch (e: Exception) {
+            Log.e("MisTicketsScreen", "Error al inicializar GoogleCalendarHelper: ${e.message}", e)
+        }
+    }
     
     // Estado para controlar el diálogo de permisos de calendario
     val showPermissionDialog = remember { mutableStateOf(false) }
@@ -294,11 +310,11 @@ private fun TicketsContent(
     val showGoogleAccountDialog = remember { mutableStateOf(false) }
     val selectedTicket = remember { mutableStateOf<TicketCompra?>(null) }
     
-    // Coroutine scope para lanzar operaciones asíncronas
-    val coroutineScope = rememberCoroutineScope()
+    // Usando lifecycleScope en lugar de rememberCoroutineScope para evitar problemas con el ciclo de vida
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     
     // Launcher para permisos de calendario
-    val context = LocalContext.current
     val calendarPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -309,9 +325,8 @@ private fun TicketsContent(
                 viewModel.googleAccount = account
                 // Añadir al calendario si tenemos permiso y cuenta
                 selectedTicket.value?.let { ticket ->
-                    coroutineScope.launch {
-                        viewModel.addEventToCalendar(ticket)
-                    }
+                    // Usamos viewModelScope que sobrevive a cambios de composición
+                    viewModel.addEventToCalendar(ticket)
                 }
             } else {
                 // No hay cuenta de Google, mostrar diálogo
@@ -405,27 +420,38 @@ private fun TicketsContent(
                 },
                 onAddToCalendar = {
                     // Este enfoque usa intents que funcionarán incluso sin una cuenta de Google establecida
-                    coroutineScope.launch {
-                        try {
-                            // Verificar solo los permisos antes de proceder
-                            val permission = android.Manifest.permission.WRITE_CALENDAR
-                            when {
-                                ContextCompat.checkSelfPermission(
-                                    context, permission
-                                ) == android.content.pm.PackageManager.PERMISSION_GRANTED -> {
-                                    // Ya tenemos permiso, proceder con añadir al calendario
-                                    viewModel.addEventToCalendar(compra)
+                    Log.d("MisTicketsScreen", "Botón 'Añadir al calendario' pulsado")
+                    try {
+                        // Verificar solo los permisos antes de proceder
+                        val permission = android.Manifest.permission.WRITE_CALENDAR
+                        Log.d("MisTicketsScreen", "Verificando permiso WRITE_CALENDAR")
+                        
+                        when {
+                            ContextCompat.checkSelfPermission(
+                                context, permission
+                            ) == android.content.pm.PackageManager.PERMISSION_GRANTED -> {
+                                // Ya tenemos permiso, proceder con añadir al calendario
+                                Log.d("MisTicketsScreen", "Permiso concedido, procediendo a añadir evento")
+                                
+                                // Verificar que el calendarHelper esté inicializado
+                                if (viewModel.calendarHelper == null) {
+                                    Log.d("MisTicketsScreen", "CalendarHelper era null, inicializando...")
+                                    viewModel.calendarHelper = GoogleCalendarHelper(context.applicationContext)
                                 }
-                                else -> {
-                                    // Necesitamos solicitar permiso
-                                    selectedTicket.value = compra
-                                    showPermissionDialog.value = true
-                                }
+                                
+                                viewModel.addEventToCalendar(compra)
+                                Log.d("MisTicketsScreen", "Llamada a addEventToCalendar realizada")
                             }
-                        } catch (e: Exception) {
-                            Log.e("MisTicketsScreen", "Error al intentar abrir intent de calendario: ${e.message}", e)
-                            viewModel.setError("Error al abrir calendario: ${e.message}")
+                            else -> {
+                                // Necesitamos solicitar permiso
+                                Log.d("MisTicketsScreen", "Permiso no concedido, mostrando diálogo")
+                                selectedTicket.value = compra
+                                showPermissionDialog.value = true
+                            }
                         }
+                    } catch (e: Exception) {
+                        Log.e("MisTicketsScreen", "Error al intentar abrir intent de calendario: ${e.message}", e)
+                        viewModel.setError("Error al abrir calendario: ${e.message}")
                     }
                 },
                 viewModel = viewModel

@@ -7,14 +7,10 @@ import com.example.app.utils.TokenManager
 import com.example.app.util.SessionManager
 
 class MyApplication : Application() {
-    companion object {
-        lateinit var appContext: Context
-            private set
-    }
-    
     override fun onCreate() {
         super.onCreate()
         appContext = applicationContext
+        Log.d("MyApplication", "Aplicación inicializada correctamente")
         
         try {
             Log.d("MyApplication", "Inicializando SessionManager...")
@@ -28,5 +24,10 @@ class MyApplication : Application() {
             Log.e("MyApplication", "Error al inicializar managers: ${e.message}")
             e.printStackTrace()
         }
+    }
+
+    companion object {
+        lateinit var appContext: Context
+            private set
     }
 }

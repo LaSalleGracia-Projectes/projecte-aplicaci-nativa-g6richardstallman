@@ -1,7 +1,9 @@
 package com.example.app.viewmodel
 
+import android.content.ContentValues
 import android.content.Intent
 import android.net.Uri
+import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.util.Log
 import androidx.compose.runtime.getValue
@@ -57,21 +59,94 @@ class TicketsViewModel(
         loadTickets()
     }
     
-    // Función para añadir evento al calendario
-    suspend fun addEventToCalendar(ticket: TicketCompra) {
-        try {
-            // Usar el método alternativo que usa intents en lugar de la API de Calendar
-            val result = calendarHelper?.addEventToCalendarUsingIntent(ticket)
-            
-            if (result == true) {
-                setSuccessMessage("Evento en curso de añadirse a tu calendario")
-            } else {
-                // Si falló, intentar con el método tradicional
-                addEventToCalendarUsingAPI(ticket)
+    // Función para añadir evento al calendario - método de emergencia
+    fun addEventToCalendarEmergency(ticket: TicketCompra) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Intentando añadir evento al calendario usando método de emergencia")
+                
+                // Construir los datos del evento
+                val beginTime = System.currentTimeMillis()
+                val endTime = beginTime + 2 * 60 * 60 * 1000 // 2 horas después
+                
+                // Usar ContentResolver directamente
+                val contentResolver = application.contentResolver
+                val values = ContentValues().apply {
+                    put(CalendarContract.Events.CALENDAR_ID, 1) // Usar el calendario principal
+                    put(CalendarContract.Events.TITLE, ticket.evento.nombre)
+                    put(CalendarContract.Events.DESCRIPTION, "Entrada para ${ticket.evento.nombre}")
+                    put(CalendarContract.Events.EVENT_LOCATION, "Ubicación del evento")
+                    put(CalendarContract.Events.DTSTART, beginTime)
+                    put(CalendarContract.Events.DTEND, endTime)
+                    put(CalendarContract.Events.ALL_DAY, 0)
+                    put(CalendarContract.Events.HAS_ALARM, 1)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+                }
+                
+                withContext(Dispatchers.IO) {
+                    try {
+                        val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                        if (uri != null) {
+                            Log.d(TAG, "Evento añadido correctamente: $uri")
+                            withContext(Dispatchers.Main) {
+                                setSuccessMessage("Evento añadido al calendario")
+                            }
+                        } else {
+                            Log.e(TAG, "Error: URI nula al insertar evento")
+                            withContext(Dispatchers.Main) {
+                                setError("Error al añadir evento al calendario")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error al insertar evento: ${e.message}", e)
+                        withContext(Dispatchers.Main) {
+                            setError("Error al añadir evento: ${e.message}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error general en método de emergencia: ${e.message}", e)
+                setError("Error al añadir evento: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.e("TicketsViewModel", "Error global: ${e.message}", e)
-            setError("Error inesperado: ${e.message}")
+        }
+    }
+    
+    // Función para añadir evento al calendario - método principal
+    fun addEventToCalendar(ticket: TicketCompra) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Iniciando proceso de añadir evento al calendario")
+                
+                // Verificar si tenemos el helper inicializado
+                if (calendarHelper == null) {
+                    Log.e(TAG, "Error: calendarHelper es null, inicializando...")
+                    calendarHelper = GoogleCalendarHelper(application.applicationContext)
+                }
+                
+                // Intentamos con el método directo de Intents
+                Log.d(TAG, "Intentando añadir evento con método de Intents")
+                val success = calendarHelper?.addEventToCalendarUsingIntent(ticket) ?: false
+                
+                if (success) {
+                    Log.d(TAG, "Evento añadido exitosamente con Intent")
+                    setSuccessMessage("Evento añadido a tu calendario")
+                } else {
+                    // Si falla el método de Intent, intentar con el método de emergencia
+                    Log.e(TAG, "Intent falló, probando método de emergencia")
+                    addEventToCalendarEmergency(ticket)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error global al añadir evento: ${e.message}", e)
+                
+                // Si falla cualquier cosa, intentar con el método de emergencia
+                try {
+                    Log.d(TAG, "Intentando método de emergencia después de excepción")
+                    addEventToCalendarEmergency(ticket)
+                } catch (e2: Exception) {
+                    Log.e(TAG, "También falló el método de emergencia: ${e2.message}", e2)
+                    setError("Error al añadir evento al calendario: ${e.message}")
+                }
+            }
         }
     }
     
