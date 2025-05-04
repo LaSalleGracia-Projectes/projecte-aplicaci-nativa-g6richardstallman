@@ -39,6 +39,7 @@ import com.example.app.util.getImageUrl
 import com.example.app.viewmodel.favoritos.FavoritosViewModel
 import kotlinx.coroutines.launch
 import com.example.app.view.organizador.OrganizadorCard
+import com.example.app.api.RetrofitClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -209,6 +210,27 @@ private fun EventosFavoritosContent(
     textSecondaryColor: Color,
     successColor: Color
 ) {
+    val scope = rememberCoroutineScope()
+    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
+
+    // Cargar precios cuando cambian los favoritos
+    LaunchedEffect(favoritos) {
+        favoritos.forEach { evento ->
+            val id = evento.getEventoId().toLong()
+            if (id > 0 && !preciosEventos.containsKey(id)) {
+                scope.launch {
+                    try {
+                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
+                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
+                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
+                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
+                        preciosEventos = preciosEventos + (id to (min to max))
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -297,6 +319,7 @@ private fun EventosFavoritosContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(favoritos) { evento ->
+                        val precios = preciosEventos[evento.getEventoId().toLong()]
                         EventoCard(
                             evento = evento,
                             onClick = { 
@@ -305,7 +328,9 @@ private fun EventosFavoritosContent(
                             primaryColor = primaryColor,
                             textPrimaryColor = textPrimaryColor,
                             textSecondaryColor = textSecondaryColor,
-                            successColor = successColor
+                            successColor = successColor,
+                            precioMin = precios?.first,
+                            precioMax = precios?.second
                         )
                     }
                 }
@@ -486,7 +511,9 @@ fun EventoCard(
     primaryColor: Color,
     textPrimaryColor: Color,
     textSecondaryColor: Color,
-    successColor: Color
+    successColor: Color,
+    precioMin: Double?,
+    precioMax: Double?
 ) {
     Card(
         modifier = Modifier
@@ -567,22 +594,20 @@ fun EventoCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 // Precio
-                val precios = evento.entradas?.map { it.precio } ?: emptyList()
-                val precioMinimo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.minOrNull() ?: 0.0
-                val precioMaximo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.maxOrNull() ?: 0.0
+                val precioTexto = if (precioMin == null && precioMax == null) {
+                    "No disponible"
+                } else if (precioMin == null && precioMax != null) {
+                    "%.2f€".format(precioMax)
+                } else if (precioMin != null && precioMax == null) {
+                    "%.2f€".format(precioMin)
+                } else {
+                    "%.2f€ - %.2f€".format(precioMin, precioMax)
+                }
                 
                 Text(
-                    text = if (evento.entradas.isNullOrEmpty()) {
-                        "No disponible"
-                    } else if (precioMinimo == 0.0 && precioMaximo == 0.0) {
-                        "Gratuito"
-                    } else if (precioMinimo == precioMaximo) {
-                        "%.2f€".format(precioMinimo)
-                    } else {
-                        "%.2f€ - %.2f€".format(precioMinimo, precioMaximo)
-                    },
+                    text = precioTexto,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (evento.entradas.isNullOrEmpty()) textSecondaryColor else if (precioMinimo == 0.0 && precioMaximo == 0.0) successColor else primaryColor,
+                    color = if (precioMin == null && precioMax == null) textSecondaryColor else if (precioMin == 0.0 && precioMax == 0.0) successColor else primaryColor,
                     fontWeight = FontWeight.Bold
                 )
             }

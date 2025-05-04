@@ -15,9 +15,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app.components.EventoCard
 import com.example.app.viewmodel.EventosCategoriaViewModel
 import com.example.app.routes.Routes
-import com.example.app.view.favoritos.EventoCard
+import com.example.app.api.RetrofitClient
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,10 +31,30 @@ fun EventosCategoriaScreen(
     val eventos = viewModel.eventos
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
+    val scope = rememberCoroutineScope()
+    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
 
     // Cargar eventos al entrar
     LaunchedEffect(categoria) {
         viewModel.loadEventosByCategoria(categoria)
+    }
+
+    // Cargar precios cuando cambian los eventos
+    LaunchedEffect(eventos) {
+        eventos.forEach { evento ->
+            val id = evento.getEventoId().toLong()
+            if (id > 0 && !preciosEventos.containsKey(id)) {
+                scope.launch {
+                    try {
+                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
+                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
+                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
+                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
+                        preciosEventos = preciosEventos + (id to (min to max))
+                    } catch (_: Exception) {}
+                }
+            }
+        }
     }
 
     val primaryColor = Color(0xFFE53935)
@@ -98,6 +120,7 @@ fun EventosCategoriaScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(eventos) { evento ->
+                            val precios = preciosEventos[evento.getEventoId().toLong()]
                             EventoCard(
                                 evento = evento,
                                 onClick = {
@@ -106,7 +129,10 @@ fun EventosCategoriaScreen(
                                 primaryColor = primaryColor,
                                 textPrimaryColor = textPrimaryColor,
                                 textSecondaryColor = textSecondaryColor,
-                                successColor = successColor
+                                successColor = successColor,
+                                navController = navController,
+                                precioMin = precios?.first,
+                                precioMax = precios?.second
                             )
                         }
                     }
