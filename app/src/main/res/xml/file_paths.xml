@@ -4,6 +4,7 @@
     <external-path name="my_images" path="Android/data/com.example.app/files/Pictures" />
     <external-files-path name="my_images" path="Pictures" />
     <cache-path name="my_cache_images" path="." />
+    <cache-path name="pdf_files" path="." />
     <files-path name="my_internal_images" path="." />
     <root-path name="root" path="." />
 </paths> 

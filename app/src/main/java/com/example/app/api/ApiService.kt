@@ -269,6 +269,12 @@ interface ApiService {
     @POST("api/auth/google/mobile/register")
     suspend fun registerWithGoogleMobile(@Body request: GoogleAuthRequest): Response<LoginResponse>
 
+    @GET("api/compras/{id}/factura")
+    suspend fun generarFactura(
+        @Header("Authorization") token: String,
+        @Path("id") idCompra: Int
+    ): Response<GenerarFacturaResponse>
+
     @GET("api/factura/{id}/pdf")
     @Headers("Accept: application/pdf")
     suspend fun downloadFactura(
@@ -322,4 +328,23 @@ data class OrganizadorResponse(
 data class AvatarResponse(
     val avatar: String?,
     val avatar_url: String?
+)
+
+// Clase para la respuesta de generar factura
+data class GenerarFacturaResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("factura") val factura: FacturaData,
+    @SerializedName("status") val status: String
+)
+
+data class FacturaData(
+    @SerializedName("id") val id: Int,
+    @SerializedName("numero") val numero: String,
+    @SerializedName("fecha_emision") val fechaEmision: String,
+    @SerializedName("fecha_vencimiento") val fechaVencimiento: String,
+    @SerializedName("subtotal") val subtotal: Double,
+    @SerializedName("impuestos") val impuestos: Double,
+    @SerializedName("descuento") val descuento: Double,
+    @SerializedName("total") val total: Double,
+    @SerializedName("estado") val estado: String
 )
