@@ -35,7 +35,6 @@ import com.example.app.model.Evento
 import com.example.app.model.Organizador
 import com.example.app.model.getOrganizadorAvatarUrl
 import com.example.app.routes.Routes
-import com.example.app.view.EventoCard
 import com.example.app.viewmodel.OrganizadorDetailViewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -48,7 +47,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import android.util.Log
 import androidx.compose.foundation.clickable
-import com.example.app.R
+import com.example.app.api.RetrofitClient
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +85,26 @@ fun OrganizadorDetailScreen(
     
     // Calcular la URL del avatar usando solo el campo avatarUrl o user.avatarUrl
     val avatarUrl = organizadorData.avatarUrl ?: organizadorData.user?.avatarUrl
+
+    val scope = rememberCoroutineScope()
+    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
+
+    LaunchedEffect(eventos) {
+        eventos.forEach { evento ->
+            val id = evento.getEventoId().toLong()
+            if (id > 0 && !preciosEventos.containsKey(id)) {
+                scope.launch {
+                    try {
+                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
+                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
+                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
+                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
+                        preciosEventos = preciosEventos + (id to (min to max))
+                    } catch (_: Exception) {}
+                }
+            }
+        }
+    }
 
     Surface(modifier = Modifier.fillMaxSize(), color = backgroundColor) {
         Scaffold(
@@ -399,6 +420,7 @@ fun OrganizadorDetailScreen(
                         )
                     }
                     else -> items(eventos, key = { it.getEventoId() }) { evento ->
+                        val precios = preciosEventos[evento.getEventoId().toLong()]
                         EventoCard(
                             evento = evento,
                             onClick = {
@@ -410,7 +432,9 @@ fun OrganizadorDetailScreen(
                             textPrimaryColor = textPrimaryColor,
                             textSecondaryColor = textSecondaryColor,
                             successColor = successColor,
-                            navController = navController
+                            navController = navController,
+                            precioMin = precios?.first,
+                            precioMax = precios?.second
                         )
                     }
                 }
@@ -421,6 +445,21 @@ fun OrganizadorDetailScreen(
             }
         }
     }
+}
+
+@Composable
+fun EventoCard(
+    evento: Evento,
+    onClick: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color,
+    successColor: Color,
+    navController: NavController,
+    precioMin: Double?,
+    precioMax: Double?
+) {
+    TODO("Not yet implemented")
 }
 
 // Función composable para mostrar una fila de información

@@ -26,14 +26,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.app.components.EventoCard
 import com.example.app.model.Evento
 import com.example.app.model.getImageUrl
 import com.example.app.routes.BottomNavigationBar
 import com.example.app.util.SessionManager
+import com.example.app.util.Constants
+import com.example.app.util.getHoraFormateada
 import com.example.app.viewmodel.EventoViewModel
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.app.util.Constants
+import com.example.app.api.RetrofitClient
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,21 +66,43 @@ fun MisEventosScreen(
     // Referencia al contexto fuera del LaunchedEffect
     val context = LocalContext.current
     
-    // Verificar si el usuario es organizador - Movido aquí arriba
+    // Verificar si el usuario es organizador
     val userRole = SessionManager.getUserRole() ?: "participante"
     val isOrganizador = userRole == "organizador"
+    
+    val scope = rememberCoroutineScope()
+    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
+
+    // Cargar precios cuando cambian los eventos
+    LaunchedEffect(eventos) {
+        eventos.forEach { evento ->
+            val id = evento.getEventoId().toLong()
+            if (id > 0 && !preciosEventos.containsKey(id)) {
+                scope.launch {
+                    try {
+                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
+                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
+                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
+                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
+                        Log.d("PRECIOS_API", "Evento $id -> min: $min, max: $max")
+                        preciosEventos = preciosEventos + (id to (min to max))
+                    } catch (e: Exception) {
+                        Log.e("PRECIOS_API", "Error obteniendo precios para evento $id", e)
+                    }
+                }
+            }
+        }
+    }
     
     // Efecto para mostrar mensaje cuando se elimina un evento
     LaunchedEffect(eventoEliminado) {
         if (eventoEliminado) {
-            // Mostrar mensaje de éxito con el texto del backend
             Toast.makeText(
                 context,
                 mensajeExito,
                 Toast.LENGTH_SHORT
             ).show()
             
-            // Resetear el estado
             viewModel.resetEventoEliminado()
         }
     }
@@ -84,26 +110,19 @@ fun MisEventosScreen(
     // Efecto para mostrar mensajes de error
     LaunchedEffect(viewModel.isError) {
         if (viewModel.isError && !viewModel.errorMessage.isNullOrEmpty()) {
-            // Añadir verificación explícita para el caso de "evento no existe"
             val errorMsg = viewModel.errorMessage ?: "Error desconocido"
             
-            // Si el error indica que el evento ya fue eliminado, tratarlo como éxito
             if (errorMsg.contains("no existe o ya fue eliminado")) {
-                // Actualizar la lista de eventos para quitar el que ya no existe
                 viewModel.fetchMisEventos()
                 
-                // Mostrar un toast informativo en verde
                 val customToast = Toast.makeText(
                     context,
                     errorMsg,
                     Toast.LENGTH_LONG
                 )
-                // Nota: en una implementación real, necesitaríamos una vista personalizada
-                // para el Toast con fondo verde, pero omitimos eso por simplicidad
                 
                 customToast.show()
             } else {
-                // Para otros errores, mostrar el mensaje normal
                 Toast.makeText(
                     context,
                     errorMsg,
@@ -111,10 +130,8 @@ fun MisEventosScreen(
                 ).show()
             }
             
-            // Limpiar error después de mostrarlo
             viewModel.clearError()
             
-            // Actualizar la lista de eventos también después de cualquier error
             if (isOrganizador && errorMsg.contains("eliminar")) {
                 Log.d("MisEventosScreen", "Actualizando lista tras error relacionado con eliminación")
                 viewModel.fetchMisEventos()
@@ -146,7 +163,6 @@ fun MisEventosScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        // Ejecutar la eliminación
                         eventoToDelete?.let { evento ->
                             viewModel.deleteEvento(evento)
                         }
@@ -305,32 +321,22 @@ fun MisEventosScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(eventos) { evento ->
-                            // Agregar log especializado para el evento EVENTOSINFOTO
-                            if (evento.titulo?.contains("EVENTOSINFOTO", ignoreCase = true) == true) {
-                                Log.d("MisEventosScreen", "Evento especial encontrado: '${evento.titulo}'")
-                                Log.d("MisEventosScreen", "Detalles de EVENTOSINFOTO - ID: ${evento.getEventoId()}, Categoría: ${evento.categoria}")
-                            }
-                            
-                            EventoCardConAcciones(
+                            val precios = preciosEventos[evento.getEventoId().toLong()]
+                            EventoCard(
                                 evento = evento,
-                                onClick = { 
-                                    val eventoId = evento.getEventoId()
-                                    if (eventoId > 0) {
-                                        navController.navigate("evento/$eventoId")
-                                    } else {
-                                        // Opcional: mostrar un Toast de error
-                                    }
-                                },
-                                onEditClick = { onEditEventoClick(evento) },
-                                onDeleteClick = { 
-                                    // Mostrar diálogo de confirmación
-                                    eventoToDelete = evento
-                                    showDeleteConfirmDialog = true
-                                },
+                                onClick = { onEventoClick(evento) },
                                 primaryColor = primaryColor,
                                 textPrimaryColor = Color.Black,
                                 textSecondaryColor = Color.DarkGray,
-                                successColor = Color(0xFF4CAF50)
+                                successColor = Color(0xFF4CAF50),
+                                navController = navController,
+                                onEditEventoClick = onEditEventoClick,
+                                onDeleteEventoClick = {
+                                    eventoToDelete = it
+                                    showDeleteConfirmDialog = true
+                                },
+                                precioMin = precios?.first,
+                                precioMax = precios?.second
                             )
                         }
                     }
@@ -342,16 +348,13 @@ fun MisEventosScreen(
 
 // Función para editar evento con manejo mejorado de errores
 private fun editarEvento(evento: Evento, navController: NavController) {
-    // Obtener el ID correcto usando getEventoId()
-    val eventoId = evento.getEventoId()
+    val eventoId = evento.getEventoId().toLong()
     
-    // Logging detallado para debugging
     Log.d("EditEvento", "======== INICIANDO EDICIÓN DE EVENTO ========")
     Log.d("EditEvento", "ID del evento: $eventoId")
     Log.d("EditEvento", "Título: ${evento.titulo}")
     Log.d("EditEvento", "ID original: ${evento.id}, idEvento: ${evento.id}")
     
-    // Validar ID y navegar directamente, siguiendo el mismo patrón que funciona en detalle
     try {
         val idString = eventoId.toString()
         Log.d("EditEvento", "ID convertido a string: '$idString'")
@@ -370,200 +373,6 @@ private fun editarEvento(evento: Evento, navController: NavController) {
             "Error al abrir pantalla de edición: ${e.message}",
             Toast.LENGTH_LONG
         ).show()
-    }
-}
-
-// Componente para mostrar un evento con botones de acciones
-@Composable
-fun EventoCardConAcciones(
-    evento: Evento,
-    onClick: () -> Unit,
-    onEditClick: () -> Unit,
-    onDeleteClick: () -> Unit,
-    primaryColor: Color,
-    textPrimaryColor: Color,
-    textSecondaryColor: Color,
-    successColor: Color
-) {
-    // Obtener el ID correcto para logging
-    val eventoId = evento.getEventoId()
-    
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(12.dp),
-                spotColor = Color.Black.copy(alpha = 0.2f)
-            )
-            .clip(RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Contenido principal (clickeable)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onClick)
-            ) {
-                // Imagen del evento
-                AsyncImage(
-                    model = evento.getImageUrl(),
-                    contentDescription = "Imagen del evento",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .width(120.dp)
-                        .height(140.dp)
-                        .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
-                )
-                
-                // Información del evento
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(16.dp)
-                ) {
-                    // Categoría
-                    Text(
-                        text = evento.categoria?.uppercase().orEmpty(),
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.sp
-                        ),
-                        color = primaryColor
-                    )
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Título del evento
-                    Text(
-                        text = evento.titulo.orEmpty(),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = textPrimaryColor,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Fecha
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = "Fecha",
-                            tint = textSecondaryColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(4.dp))
-                        
-                        Text(
-                            text = formatDate(evento.fechaEvento.orEmpty()),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = textSecondaryColor
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Hora
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccessTime,
-                            contentDescription = "Hora",
-                            tint = textSecondaryColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(4.dp))
-                        
-                        Text(
-                            text = formatTime(evento.hora ?: ""),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = textSecondaryColor
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Ubicación
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Ubicación",
-                            tint = textSecondaryColor,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(4.dp))
-                        
-                        Text(
-                            text = evento.ubicacion.orEmpty(),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = textSecondaryColor
-                        )
-                    }
-                }
-            }
-            
-            // Barra de acciones
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Espacio flexible a la izquierda
-                Spacer(modifier = Modifier.weight(1f))
-                
-                // Botón de editar (ahora al centro)
-                TextButton(
-                    onClick = onEditClick,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = primaryColor
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar evento",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Editar")
-                }
-                
-                // Botón de eliminar (a la derecha)
-                TextButton(
-                    onClick = { 
-                        onDeleteClick()
-                    },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color.Red
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar evento",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Eliminar")
-                }
-            }
-        }
     }
 }
 

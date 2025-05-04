@@ -148,7 +148,7 @@ class EditarEventoViewModel : ViewModel() {
                         categoria = evento.categoria ?: ""
                         esOnline = evento.esOnline ?: false
                         imagenUrl = evento.imagen ?: ""
-                        
+
                         // Cargar tipos de entrada
                         cargarTiposEntrada(id)
                         
@@ -191,7 +191,7 @@ class EditarEventoViewModel : ViewModel() {
                 if (response.isSuccessful && response.body() != null) {
                     val tiposEntradaAPI = response.body()?.tiposEntrada ?: emptyList()
                     Log.d(TAG, "Tipos de entrada recibidos: ${tiposEntradaAPI.size}")
-                    
+
                     // Guardar los tipos originales para referencia
                     tiposEntradaOriginales = tiposEntradaAPI.map { tipo ->
                         TipoEntradaDetalle(
@@ -295,7 +295,7 @@ class EditarEventoViewModel : ViewModel() {
             updateError("Debe haber al menos un tipo de entrada")
         }
     }
-    
+
     fun updateTipoEntrada(index: Int, tipoEntrada: TipoEntradaRequest) {
         if (index >= 0 && index < tiposEntrada.size) {
             tiposEntrada = tiposEntrada.toMutableList().apply {
@@ -303,13 +303,15 @@ class EditarEventoViewModel : ViewModel() {
             }
         }
     }
-    
+
     // Funciones para actualizar los campos del formulario
     fun updateTitulo(newTitulo: String) {
-        titulo = newTitulo
-        nombreEvento = newTitulo // Actualizar ambas propiedades
+        Log.d(TAG, "Actualizando título: '$newTitulo'")
+        titulo = newTitulo.trim()
+        nombreEvento = newTitulo.trim() // Actualizar ambas propiedades
+        Log.d(TAG, "Título actualizado: '$titulo', nombreEvento: '$nombreEvento'")
     }
-    
+
     fun updateDescripcion(newDescripcion: String) {
         descripcion = newDescripcion
     }
@@ -348,10 +350,13 @@ class EditarEventoViewModel : ViewModel() {
         val errores = mutableListOf<String>()
         
         // Validar campos obligatorios
+        Log.d(TAG, "Validando título: '$titulo', longitud: ${titulo.length}")
         if (titulo.isBlank()) {
+            Log.e(TAG, "Error de validación: Título está en blanco")
             errores.add("El título es obligatorio")
         }
         
+        Log.d(TAG, "Validando descripción: Longitud ${descripcion.length}")
         if (descripcion.isBlank()) {
             errores.add("La descripción es obligatoria")
         }
@@ -395,8 +400,8 @@ class EditarEventoViewModel : ViewModel() {
         
         if (categoria.isBlank()) {
             errores.add("La categoría es obligatoria")
-        }
-        
+                }
+
         // Validar tipos de entrada para eventos presenciales
         if (!esOnline) {
             if (tiposEntrada.isEmpty()) {
@@ -416,8 +421,8 @@ class EditarEventoViewModel : ViewModel() {
                     }
                 }
             }
-        }
-        
+                    }
+
         if (errores.isNotEmpty()) {
             val mensajeError = buildString {
                 appendLine("Por favor, corrige los siguientes errores:")
@@ -443,6 +448,16 @@ class EditarEventoViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Log.d(TAG, "Iniciando actualización de evento #$eventoId")
+                Log.d(TAG, "Datos que se enviarán:")
+                Log.d(TAG, "- Título: '$titulo'")
+                Log.d(TAG, "- Descripción: '${descripcion.take(20)}...'")
+                Log.d(TAG, "- Fecha: '$fechaEvento'")
+                Log.d(TAG, "- Hora: '$hora'")
+                Log.d(TAG, "- Ubicación: '$ubicacion'")
+                Log.d(TAG, "- Categoría: '$categoria'")
+                Log.d(TAG, "- Es online: $esOnline")
+                Log.d(TAG, "- Imagen nueva: ${imagenUri != null}")
+                Log.d(TAG, "- Tipos de entrada: ${tiposEntrada.size}")
                 
                 // Validar que los campos obligatorios estén completos
                 if (!validarCampos()) {
@@ -469,8 +484,8 @@ class EditarEventoViewModel : ViewModel() {
                     actualizarEventoConImagen(context, token)
                 } else {
                     actualizarEventoSinImagen(token)
-                }
-                
+                    }
+
                 Log.d(TAG, "Código de respuesta: ${response.code()}")
 
                     if (response.isSuccessful) {
@@ -486,7 +501,7 @@ class EditarEventoViewModel : ViewModel() {
                         // Intentar parsear el error JSON
                         val errorJson = Gson().fromJson(errorBody, Map::class.java) as? Map<String, Any>
                         Log.e(TAG, "Error response parseado: $errorJson")
-                        
+
                         val errorMessages = errorJson?.get("messages") as? Map<String, List<String>>
                         if (errorMessages != null) {
                             Log.e(TAG, "Errores de validación encontrados: $errorMessages")
@@ -502,8 +517,8 @@ class EditarEventoViewModel : ViewModel() {
                             // Si no hay errores específicos de validación, mostrar mensaje general
                             val mensaje = errorJson?.get("message") as? String ?: "Error desconocido"
                             updateError("Error al actualizar el evento: $mensaje")
-                        }
-                    } catch (e: Exception) {
+                    }
+                } catch (e: Exception) {
                         Log.e(TAG, "Error al parsear respuesta de error", e)
                         updateError("Error al actualizar el evento: $errorBody")
                     }
@@ -516,158 +531,131 @@ class EditarEventoViewModel : ViewModel() {
             }
         }
     }
-    
+
     private suspend fun actualizarEventoConImagen(context: Context, token: String): Response<CrearEventoResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                // Preparar la imagen
-                val imagenPart = procesarImagen(context, imagenUri!!)
-                
-                // Preparar tipos de entrada
-                val tiposEntradaFinal = if (esOnline) {
-                    emptyList()
-                } else {
-                    // Asegurarnos de que todos los tipos de entrada tengan valores válidos
-                    tiposEntrada.map { tipo ->
-                        // Validamos y corregimos cada tipo de entrada
-                        tipo.copy(
-                            nombre = if (tipo.nombre.isBlank()) "General" else tipo.nombre,
-                            precio = if (tipo.precio <= 0) 0.01 else tipo.precio,
-                            cantidadDisponible = if (tipo.esIlimitado) null else 
-                                               (tipo.cantidadDisponible ?: 100).takeIf { it > 0 } ?: 100,
-                            descripcion = tipo.descripcion.takeIf { !it.isNullOrBlank() } ?: "Entrada estándar",
-                            esIlimitado = tipo.esIlimitado
-                        )
-                    }
+                // Procesar la imagen
+                Log.d(TAG, "Procesando imagen para actualización")
+                val imagenPart = try {
+                    procesarImagen(context, imagenUri!!)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error al procesar imagen: ${e.message}")
+                    throw Exception("Error al procesar la imagen: ${e.message}")
                 }
                 
-                if (tiposEntradaFinal.isEmpty() && !esOnline) {
-                    throw Exception("Debe especificar al menos un tipo de entrada para eventos presenciales")
-                }
+                // Crear un mapa de datos para el formulario multipart
+                val eventoData = HashMap<String, RequestBody>()
                 
-                // Crear las partes del formulario
-                val tituloBody = titulo.toRequestBody("text/plain".toMediaTypeOrNull())
-                val descripcionBody = descripcion.toRequestBody("text/plain".toMediaTypeOrNull())
-                val fechaBody = fechaEvento.toRequestBody("text/plain".toMediaTypeOrNull())
-                val horaBody = hora.toRequestBody("text/plain".toMediaTypeOrNull())
-                val ubicacionBody = ubicacion.toRequestBody("text/plain".toMediaTypeOrNull())
-                val categoriaBody = categoria.toRequestBody("text/plain".toMediaTypeOrNull())
-                val esOnlineBody = (if (esOnline) "1" else "0").toRequestBody("text/plain".toMediaTypeOrNull())
+                // Convertir cada campo de texto a RequestBody
+                eventoData["titulo"] = titulo.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["descripcion"] = descripcion.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["fecha"] = fechaEvento.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["hora"] = hora.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["ubicacion"] = ubicacion.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["categoria"] = categoria.toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["es_online"] = (if (esOnline) "1" else "0").toRequestBody("text/plain".toMediaTypeOrNull())
+                eventoData["_method"] = "PUT".toRequestBody("text/plain".toMediaTypeOrNull())
                 
-                // Para eventos presenciales, enviamos todos los tipos de entrada
+                // Para eventos presenciales, manejar los tipos de entrada
                 val partesTiposEntradas = mutableListOf<MultipartBody.Part>()
                 
-                // Procesamos cada tipo de entrada
-                tiposEntradaFinal.forEachIndexed { index, tipo ->
-                    // Creamos cada parte para este tipo de entrada
-                    partesTiposEntradas.add(
-                        MultipartBody.Part.createFormData(
-                            "tipos_entrada[$index][nombre]", 
-                            tipo.nombre
-                        )
-                    )
-                    partesTiposEntradas.add(
-                        MultipartBody.Part.createFormData(
-                            "tipos_entrada[$index][precio]", 
-                            tipo.precio.toString()
-                        )
-                    )
-                    partesTiposEntradas.add(
-                        MultipartBody.Part.createFormData(
-                            "tipos_entrada[$index][cantidad_disponible]", 
-                            (tipo.cantidadDisponible ?: "").toString()
-                        )
-                    )
-                    partesTiposEntradas.add(
-                        MultipartBody.Part.createFormData(
-                            "tipos_entrada[$index][descripcion]", 
-                            tipo.descripcion ?: ""
-                        )
-                    )
-                    partesTiposEntradas.add(
-                        MultipartBody.Part.createFormData(
-                            "tipos_entrada[$index][es_ilimitado]", 
-                            if (tipo.esIlimitado) "1" else "0"
-                        )
-                    )
-                    
-                    // Si estamos actualizando un tipo existente, incluir su ID
-                    if (index < tiposEntradaOriginales.size) {
+                if (!esOnline) {
+                    // Procesar cada tipo de entrada
+                    tiposEntrada.forEachIndexed { index, tipo ->
+                        // Crear las partes del formulario para los tipos de entrada
                         partesTiposEntradas.add(
                             MultipartBody.Part.createFormData(
-                                "tipos_entrada[$index][idTipoEntrada]",
-                                tiposEntradaOriginales[index].id.toString()
+                                "tipos_entrada[$index][nombre]", 
+                                tipo.nombre
+                            )
+                        )
+                        partesTiposEntradas.add(
+                            MultipartBody.Part.createFormData(
+                                "tipos_entrada[$index][precio]", 
+                                tipo.precio.toString()
+                            )
+                        )
+                        partesTiposEntradas.add(
+                            MultipartBody.Part.createFormData(
+                                "tipos_entrada[$index][descripcion]", 
+                                tipo.descripcion ?: "Acceso General Evento"
+                            )
+                        )
+                        partesTiposEntradas.add(
+                            MultipartBody.Part.createFormData(
+                                "tipos_entrada[$index][cantidad_disponible]", 
+                                (tipo.cantidadDisponible ?: 100).toString()
+                            )
+                        )
+                        partesTiposEntradas.add(
+                            MultipartBody.Part.createFormData(
+                                "tipos_entrada[$index][es_ilimitado]", 
+                                if (tipo.esIlimitado) "1" else "0"
                             )
                         )
                     }
                 }
                 
-                // Llamar a la API para actualizar con imagen
+                // Llamar a la API con el formato de Postman
                 RetrofitClient.apiService.actualizarEventoConImagen(
                     id = eventoId.toString(),
-                    token = "Bearer $token",
-                    titulo = tituloBody,
-                    descripcion = descripcionBody,
-                    fecha = fechaBody,
-                    hora = horaBody,
-                    ubicacion = ubicacionBody,
-                    categoria = categoriaBody,
-                    esOnline = esOnlineBody,
+                                token = "Bearer $token",
+                    titulo = eventoData["titulo"]!!,
+                    descripcion = eventoData["descripcion"]!!,
+                    fecha = eventoData["fecha"]!!,
+                    hora = eventoData["hora"]!!,
+                    ubicacion = eventoData["ubicacion"]!!,
+                    categoria = eventoData["categoria"]!!,
+                    esOnline = eventoData["es_online"]!!,
                     tiposEntradas = partesTiposEntradas,
-                    imagen = imagenPart
+                    imagen = imagenPart,
+                    method = eventoData["_method"]!!
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Error al actualizar evento con imagen", e)
+                Log.e(TAG, "Error al actualizar evento con imagen: ${e.message}")
                 throw e
             }
-        }
-    }
-    
+                        }
+                    }
+
     private suspend fun actualizarEventoSinImagen(token: String): Response<CrearEventoResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                // Preparar tipos de entrada según si es evento online o no
-                val tiposEntradaFinal = if (esOnline) {
-                    emptyList()
-                } else {
-                    // Asegurarnos de que todos los tipos de entrada tengan valores válidos
-                    tiposEntrada.map { tipo ->
-                        // Validamos y corregimos cada tipo de entrada
-                        tipo.copy(
-                            nombre = if (tipo.nombre.isBlank()) "General" else tipo.nombre,
-                            precio = if (tipo.precio <= 0) 0.01 else tipo.precio,
-                            cantidadDisponible = if (tipo.esIlimitado) null else 
-                                               (tipo.cantidadDisponible ?: 100).takeIf { it > 0 } ?: 100,
-                            descripcion = tipo.descripcion.takeIf { !it.isNullOrBlank() } ?: "Entrada estándar",
-                            esIlimitado = tipo.esIlimitado
+                // Crear un mapa con los datos en el formato exacto que espera el API
+                val eventoData = HashMap<String, @JvmSuppressWildcards Any>()
+                eventoData["nombreEvento"] = titulo
+                eventoData["descripcion"] = descripcion
+                eventoData["fechaEvento"] = fechaEvento
+                eventoData["hora"] = hora
+                eventoData["ubicacion"] = ubicacion
+                eventoData["categoria"] = categoria
+                eventoData["es_online"] = esOnline
+                
+                // Preparar tipos de entrada en el formato que necesita Postman
+                if (!esOnline) {
+                    val tiposList = tiposEntrada.mapIndexed { index, tipo ->
+                        mapOf(
+                            "nombre" to tipo.nombre,
+                            "precio" to tipo.precio,
+                            "descripcion" to (tipo.descripcion ?: "Acceso General Evento"),
+                            "es_ilimitado" to tipo.esIlimitado,
+                            "cantidad_disponible" to (tipo.cantidadDisponible ?: 100)
                         )
                     }
+                    eventoData["tipos_entrada"] = tiposList
                 }
                 
-                if (tiposEntradaFinal.isEmpty() && !esOnline) {
-                    throw Exception("Debe especificar al menos un tipo de entrada para eventos presenciales")
-                }
+                Log.d(TAG, "Enviando datos para actualizar evento usando PUT: ${Gson().toJson(eventoData)}")
                 
-                // Crear objeto para la actualización
-                val eventoRequest = EventoRequest(
-                    titulo = titulo,
-                    descripcion = descripcion,
-                    fecha = fechaEvento,
-                    hora = hora,
-                    ubicacion = ubicacion,
-                    categoria = categoria,
-                    esOnline = esOnline,
-                    tiposEntrada = tiposEntradaFinal
-                )
-                
-                // Llamar a la API para actualizar sin imagen
-                RetrofitClient.apiService.actualizarEvento(
+                // Llamar al método PUT para modificar el evento
+                RetrofitClient.apiService.modificarEvento(
                     id = eventoId.toString(),
                     token = "Bearer $token",
-                    request = eventoRequest
+                    eventoData = eventoData
                 )
             } catch (e: Exception) {
-                Log.e(TAG, "Error al actualizar evento sin imagen", e)
+                Log.e(TAG, "Error al actualizar evento sin imagen: ${e.message}")
                 throw e
             }
         }

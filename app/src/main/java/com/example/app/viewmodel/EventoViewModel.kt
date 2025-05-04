@@ -8,10 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.app.api.ApiService
 import com.example.app.api.RetrofitClient
 import com.example.app.model.Evento
-import com.example.app.model.evento.EventoResponse
 import com.example.app.util.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,7 +43,7 @@ class EventoViewModel : ViewModel() {
     val isRegisterSuccessful: StateFlow<Boolean> = _isRegisterSuccessful
     
     // Estado para el evento en proceso de eliminación
-    var eventoEliminandoId by mutableStateOf<Int?>(null)
+    var eventoEliminandoId by mutableStateOf<Long?>(null)
         private set
     
     // Estado para el resultado de la eliminación
@@ -232,7 +230,7 @@ class EventoViewModel : ViewModel() {
         }
     }
     
-    fun toggleFavorito(eventoId: Int) {
+    fun toggleFavorito(eventoId: Long) {
         viewModelScope.launch {
             try {
                 Log.d("FAVORITOS", "Toggle favorito para evento $eventoId")
@@ -246,7 +244,7 @@ class EventoViewModel : ViewModel() {
                     200 -> {
                         // Actualizar el estado del evento en la lista local
                         eventos = eventos.map { evento ->
-                            if (evento.getEventoId() == eventoId) {
+                            if (evento.getEventoId().toLong() == eventoId) {
                                 evento.copy(isFavorito = !evento.isFavorito)
                             } else {
                                 evento
@@ -334,7 +332,7 @@ class EventoViewModel : ViewModel() {
                 isLoading = true
                 errorMessage = null
                 isError = false
-                eventoEliminandoId = evento.getEventoId()
+                eventoEliminandoId = evento.getEventoId().toLong()
                 
                 // Limpiar cualquier respuesta exitosa anterior
                 _eventoEliminadoExitosamente.value = false
@@ -342,20 +340,20 @@ class EventoViewModel : ViewModel() {
                 // Ejecutar llamada a la API
                 try {
                     // Obtenemos el ID correcto del evento
-                    val eventoId = evento.getEventoId()
+                    val id = evento.getEventoId().toLong()
                     
                     Log.d("DELETE_EVENTO", """
                         Realizando petición DELETE:
-                        - Ruta: /api/eventos/$eventoId
+                        - Ruta: /api/eventos/$id
                         - ID original: ${evento.id}
                         - IDEvento: ${evento.id}
-                        - getEventoId(): $eventoId
+                        - getEventoId(): $id
                         - Título: ${evento.titulo}
                     """.trimIndent())
                     
                     val response = withContext(Dispatchers.IO) {
                         RetrofitClient.apiService.deleteEvento(
-                            id = eventoId.toString(),
+                            id = id.toString(),
                             token = "Bearer $token"
                         )
                     }
@@ -367,7 +365,7 @@ class EventoViewModel : ViewModel() {
                         Log.d("DELETE_EVENTO", "Cuerpo de respuesta: ${deleteResponse}")
                         
                         // Eliminar el evento de la lista de misEventos independientemente de la respuesta
-                        misEventos = misEventos.filter { it.getEventoId() != evento.getEventoId() }
+                        misEventos = misEventos.filter { it.getEventoId().toLong() != evento.getEventoId().toLong() }
                         
                         // Si la eliminación fue exitosa, emitir evento de éxito
                         isError = false
@@ -415,7 +413,7 @@ class EventoViewModel : ViewModel() {
                                 Log.d("DELETE_EVENTO", "Error 404: Evento no encontrado - Tratando como eliminación exitosa")
                                 
                                 // Eliminar el evento de la lista local al ser un 404
-                                misEventos = misEventos.filter { it.getEventoId() != evento.getEventoId() }
+                                misEventos = misEventos.filter { it.getEventoId().toLong() != evento.getEventoId().toLong() }
                                 
                                 // Tratar como éxito en lugar de error, con mensaje específico
                                 isError = false
@@ -467,5 +465,18 @@ class EventoViewModel : ViewModel() {
     // Resetear el estado de eliminación
     fun resetEventoEliminado() {
         _eventoEliminadoExitosamente.value = false
+    }
+
+    fun Evento.getHoraFormateada(): String {
+        return try {
+            val partes = this.hora?.split(":") ?: return this.hora ?: ""
+            if (partes.size >= 2) {
+                "${partes[0].padStart(2, '0')}:${partes[1].padStart(2, '0')}"
+            } else {
+                this.hora ?: ""
+            }
+        } catch (e: Exception) {
+            this.hora ?: ""
+        }
     }
 }

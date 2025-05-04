@@ -43,8 +43,6 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.Field
 import retrofit2.http.Query
 import retrofit2.http.Headers
 import okhttp3.ResponseBody
@@ -100,7 +98,7 @@ interface ApiService {
     ): Response<FavoritoCheckResponse>
     
     @POST("eventos/{eventoId}/favorito")
-    suspend fun toggleFavorito(@Path("eventoId") eventoId: Int): Response<Unit>
+    suspend fun toggleFavorito(@Path("eventoId") eventoId: Long): Response<Unit>
     
     @GET("api/mis-eventos")
     suspend fun getMisEventosFromApi(
@@ -291,6 +289,28 @@ interface ApiService {
 
     @GET("/api/avatar")
     suspend fun getAvatar(@Header("Authorization") token: String): Response<AvatarResponse>
+
+    // Método para actualizar eventos usando el formato correcto según Postman
+    @PUT("api/eventos/{id}")
+    suspend fun modificarEvento(
+        @Path("id") id: String,
+        @Header("Authorization") token: String,
+        @Body eventoData: Map<String, @JvmSuppressWildcards Any>
+    ): Response<CrearEventoResponse>
+
+    // Método DELETE para editar eventos (usando el formato que se ve en Postman)
+    @DELETE("api/eventos/{id}")
+    suspend fun modificarEventoDelete(
+        @Path("id") id: String,
+        @Header("Authorization") token: String,
+        @Body eventoData: Map<String, Any>
+    ): Response<CrearEventoResponse>
+
+    @GET("api/eventos/{id}/precio-minimo")
+    suspend fun getPrecioMinimoEvento(@Path("id") id: Long): PrecioEventoWrapper
+
+    @GET("api/eventos/{id}/precio-maximo")
+    suspend fun getPrecioMaximoEvento(@Path("id") id: Long): PrecioEventoWrapper
 }
 
 data class FavoritosResponse(
@@ -347,4 +367,14 @@ data class FacturaData(
     @SerializedName("descuento") val descuento: Double,
     @SerializedName("total") val total: Double,
     @SerializedName("estado") val estado: String
+)
+
+// Modelo para la respuesta de precio
+data class PrecioResponse(val precio: Double?)
+
+// Modelos para la respuesta de precio mínimo/máximo
+data class PrecioEventoWrapper(val evento: PrecioEvento)
+data class PrecioEvento(
+    val precio_minimo: String?, // para el endpoint de mínimo
+    val precio_maximo: String?  // para el endpoint de máximo
 )
