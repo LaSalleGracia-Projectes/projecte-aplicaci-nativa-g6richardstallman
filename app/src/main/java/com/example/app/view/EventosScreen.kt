@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,6 +59,7 @@ import android.util.Log
 import com.example.app.util.SessionManager
 import com.example.app.util.Constants
 import com.example.app.util.getImageUrl
+import com.example.app.routes.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,7 +250,8 @@ fun EventosScreen(
                                 primaryColor = primaryColor,
                                 textPrimaryColor = textPrimaryColor,
                                 textSecondaryColor = textSecondaryColor,
-                                successColor = successColor
+                                successColor = successColor,
+                                navController = navController
                             )
                         }
                     }
@@ -265,7 +268,8 @@ fun EventoCard(
     primaryColor: Color,
     textPrimaryColor: Color,
     textSecondaryColor: Color,
-    successColor: Color
+    successColor: Color,
+    navController: NavController
 ) {
     // Usar la función de extensión para obtener la URL de la imagen
     val imageUrl = evento.getImageUrl()

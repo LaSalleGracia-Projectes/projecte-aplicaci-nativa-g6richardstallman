@@ -49,6 +49,23 @@ sealed class Routes(val route: String) {
     object EventosCategoria : Routes("eventos_categoria/{categoria}") {
         fun createRoute(categoria: String) = "eventos_categoria/$categoria"
     }
+    
+    /** Ruta para comprar entradas */
+    object ComprarEntradas : Routes("comprar_entradas/{eventoId}") {
+        fun createRoute(eventoId: String): String {
+            val id = eventoId.trim()
+            
+            android.util.Log.d("Routes", "Creando ruta ComprarEntradas con ID: '$id'")
+            
+            if (!id.isValidEventoId()) {
+                val errorMsg = id.getEventoIdErrorMessage()
+                android.util.Log.e("Routes", errorMsg)
+                throw IllegalArgumentException(errorMsg)
+            }
+            
+            return "comprar_entradas/$id"
+        }
+    }
 }
 
 // Función de utilidad para manejar tokens de forma segura

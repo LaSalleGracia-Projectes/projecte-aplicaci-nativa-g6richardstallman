@@ -4,15 +4,22 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app.api.RetrofitClient
+import com.example.app.model.Evento
+import com.example.app.model.TipoEntrada
+import com.example.app.model.TipoEntradaDetalle
+import com.example.app.model.CompraRequest
+import com.example.app.model.EntradaCompra
 import com.example.app.util.SessionManager
-import com.example.app.model.evento.EventoRequest
-import com.example.app.model.evento.TipoEntradaRequest
-import com.example.app.model.evento.CategoriaEvento
-import com.example.app.model.evento.CrearEventoResponse
+import com.example.app.util.isValidEventoId
+import com.example.app.util.getEventoIdErrorMessage
+import com.example.app.util.toValidEventoId
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import android.util.Log
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -22,8 +29,6 @@ import android.content.Context
 import androidx.core.content.FileProvider
 import com.example.app.util.FileUtil
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import retrofit2.Response
 import java.io.File
 import java.io.IOException
@@ -37,37 +42,37 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.FileOutputStream
 import java.io.InputStream
-import com.example.app.model.Evento
-import com.example.app.model.TipoEntrada
+import com.example.app.model.evento.EventoRequest
+import com.example.app.model.evento.TipoEntradaRequest
+import com.example.app.model.evento.CategoriaEvento
+import com.example.app.model.evento.CrearEventoResponse
 import com.example.app.util.Constants
 
 class EditarEventoViewModel : ViewModel() {
+    // ID del evento a editar
+    var eventoId by mutableStateOf<Int?>(null)
+    
     // Datos básicos del evento
     var nombreEvento by mutableStateOf("")
-    var descripcion by mutableStateOf<String?>(null)
+    var descripcion by mutableStateOf("")
     var fechaEvento by mutableStateOf("")
-    var hora by mutableStateOf<String?>(null)
-    var ubicacion by mutableStateOf<String?>(null)
-    var categoria by mutableStateOf<String?>(null)
+    var hora by mutableStateOf("")
+    var ubicacion by mutableStateOf("")
+    var categoria by mutableStateOf("")
     var esOnline by mutableStateOf(false)
     
     // URI de la imagen original y la que se toma con la cámara
     var imagen by mutableStateOf<Uri?>(null)
-    var imagenCamara by mutableStateOf<Uri?>(null)
-    
-    // Imagen URL y URIs
-    var imagenUrl by mutableStateOf<String?>(null)
-    var imagenUri by mutableStateOf<Uri?>(null)
-    
-    // Id del evento en caso de edición
-    var eventoId by mutableStateOf<Int?>(null)
+    var imageUri by mutableStateOf<Uri?>(null)
     
     // Datos del formulario
     var titulo by mutableStateOf("")
+    var imagenUri by mutableStateOf<Uri?>(null)
+    var imagenUrl by mutableStateOf("")
     
     // Tipos de entrada
     var tiposEntrada by mutableStateOf<List<TipoEntradaRequest>>(listOf())
-    var tiposEntradaOriginales by mutableStateOf<List<TipoEntrada>>(listOf())
+    var tiposEntradaOriginales by mutableStateOf<List<TipoEntradaDetalle>>(listOf())
     
     // Estados de UI
     var isLoading by mutableStateOf(false)
@@ -114,7 +119,7 @@ class EditarEventoViewModel : ViewModel() {
                     updateError("No hay sesión activa. Por favor, inicia sesión.")
                     return@launch
                 }
-                
+
                 Log.d(TAG, "Token disponible: ${token.take(10)}... [${token.length} caracteres]")
                 
                 // Obtener datos del evento desde la API
@@ -124,7 +129,7 @@ class EditarEventoViewModel : ViewModel() {
                 }
                 
                 Log.d(TAG, "Respuesta recibida - Código: ${response.code()}, Exitosa: ${response.isSuccessful}")
-                
+
                 if (response.isSuccessful && response.body() != null) {
                     val evento = response.body()?.evento
                     if (evento != null) {
@@ -134,18 +139,15 @@ class EditarEventoViewModel : ViewModel() {
                         Log.d(TAG, "Categoría: ${evento.categoria}, Online: ${evento.esOnline}")
                         
                         // Llenar los datos del formulario
-                        nombreEvento = evento.titulo.orEmpty()
-                        titulo = evento.titulo.orEmpty()
-                        descripcion = evento.descripcion
+                        nombreEvento = evento.titulo ?: ""
+                        titulo = evento.titulo ?: ""
+                        descripcion = evento.descripcion ?: ""
                         fechaEvento = evento.fechaEvento ?: ""
                         hora = formatearHora(evento.hora ?: "")
-                        ubicacion = evento.ubicacion
-                        categoria = evento.categoria
-                        esOnline = evento.esOnline
-                        // Cargar imagen
-                        if (evento.imagen != null) {
-                            imagenUrl = Constants.STORAGE_URL + evento.imagen
-                        }
+                        ubicacion = evento.ubicacion ?: ""
+                        categoria = evento.categoria ?: ""
+                        esOnline = evento.esOnline ?: false
+                        imagenUrl = evento.imagen ?: ""
                         
                         // Cargar tipos de entrada
                         cargarTiposEntrada(id)
@@ -169,7 +171,7 @@ class EditarEventoViewModel : ViewModel() {
             }
         }
     }
-    
+
     private fun cargarTiposEntrada(idEvento: Int) {
         viewModelScope.launch {
             try {
@@ -179,25 +181,38 @@ class EditarEventoViewModel : ViewModel() {
                     Log.e(TAG, "Error: ID de evento inválido ($idEvento) al cargar tipos de entrada")
                     return@launch
                 }
-                
+
                 val response = withContext(Dispatchers.IO) {
                     RetrofitClient.apiService.getTiposEntrada(idEvento.toString())
                 }
                 
                 Log.d(TAG, "Respuesta de tipos de entrada recibida con código: ${response.code()}")
-                
+
                 if (response.isSuccessful && response.body() != null) {
                     val tiposEntradaAPI = response.body()?.tiposEntrada ?: emptyList()
                     Log.d(TAG, "Tipos de entrada recibidos: ${tiposEntradaAPI.size}")
                     
                     // Guardar los tipos originales para referencia
-                    tiposEntradaOriginales = tiposEntradaAPI
+                    tiposEntradaOriginales = tiposEntradaAPI.map { tipo ->
+                        TipoEntradaDetalle(
+                            id = tipo.getEffectiveId(),
+                            idEvento = tipo.idEvento ?: 0,
+                            nombre = tipo.nombre ?: "",
+                            precio = tipo.precio ?: "0",
+                            cantidadDisponible = tipo.cantidadDisponible,
+                            entradasVendidas = tipo.entradasVendidas ?: 0,
+                            descripcion = tipo.descripcion,
+                            esIlimitado = tipo.esIlimitado ?: false,
+                            activo = tipo.activo ?: true,
+                            disponibilidad = tipo.disponibilidad
+                        )
+                    }
                     
                     // Convertir a TipoEntradaRequest
                     tiposEntrada = tiposEntradaAPI.map { tipo ->
                         TipoEntradaRequest(
-                            nombre = tipo.nombre ?: "General",
-                            precio = tipo.getPrecioDouble(),
+                            nombre = tipo.nombre ?: "",
+                            precio = tipo.precio?.toDoubleOrNull() ?: 0.0,
                             cantidadDisponible = tipo.cantidadDisponible,
                             descripcion = tipo.descripcion,
                             esIlimitado = tipo.esIlimitado ?: false
@@ -337,7 +352,7 @@ class EditarEventoViewModel : ViewModel() {
             errores.add("El título es obligatorio")
         }
         
-        if (descripcion.isNullOrBlank()) {
+        if (descripcion.isBlank()) {
             errores.add("La descripción es obligatoria")
         }
         
@@ -363,22 +378,22 @@ class EditarEventoViewModel : ViewModel() {
             }
         }
         
-        if (hora.isNullOrBlank()) {
+        if (hora.isBlank()) {
             errores.add("La hora es obligatoria")
         } else {
             // Validar formato de hora HH:MM
             val horaRegex = "^([01]?[0-9]|2[0-3]):([0-5][0-9])$"
-            if (!hora.orEmpty().matches(Regex(horaRegex))) {
+            if (!hora.matches(Regex(horaRegex))) {
                 errores.add("Formato de hora incorrecto. Debe ser HH:MM (valor actual: '$hora')")
                 Log.e(TAG, "Error de validación: Formato de hora incorrecto: '$hora'. Debe coincidir con el patrón: $horaRegex")
             }
         }
         
-        if (ubicacion.isNullOrBlank()) {
+        if (ubicacion.isBlank()) {
             errores.add("La ubicación es obligatoria")
         }
         
-        if (categoria.isNullOrBlank()) {
+        if (categoria.isBlank()) {
             errores.add("La categoría es obligatoria")
         }
         
@@ -434,7 +449,7 @@ class EditarEventoViewModel : ViewModel() {
                     Log.e(TAG, "Validación de campos fallida")
                     return@launch
                 }
-                
+
                 Log.d(TAG, "Validación de campos exitosa")
                 
                 // Obtener token
@@ -444,7 +459,7 @@ class EditarEventoViewModel : ViewModel() {
                     updateError("No hay sesión activa. Por favor, inicia sesión.")
                     return@launch
                 }
-                
+
                 // Iniciar carga
                 isLoading = true
                 error = null
@@ -457,12 +472,12 @@ class EditarEventoViewModel : ViewModel() {
                 }
                 
                 Log.d(TAG, "Código de respuesta: ${response.code()}")
-                
-                if (response.isSuccessful) {
+
+                    if (response.isSuccessful) {
                     val eventoResponse = response.body()
                     Log.d(TAG, "Evento actualizado exitosamente: ${eventoResponse?.message}")
                     _isUpdateSuccessful.value = true
-                } else {
+                    } else {
                     // Procesar error de la respuesta
                     val errorBody = response.errorBody()?.string() ?: "Error desconocido"
                     Log.e(TAG, "Error detallado al actualizar evento:\n- Código: ${response.code()}\n- Cuerpo del error: $errorBody\n- Headers: ${response.headers()}")
@@ -532,11 +547,11 @@ class EditarEventoViewModel : ViewModel() {
                 
                 // Crear las partes del formulario
                 val tituloBody = titulo.toRequestBody("text/plain".toMediaTypeOrNull())
-                val descripcionBody = descripcion.toRequestBodyOrDefault()
+                val descripcionBody = descripcion.toRequestBody("text/plain".toMediaTypeOrNull())
                 val fechaBody = fechaEvento.toRequestBody("text/plain".toMediaTypeOrNull())
-                val horaBody = hora.toRequestBodyOrDefault()
-                val ubicacionBody = ubicacion.toRequestBodyOrDefault()
-                val categoriaBody = categoria.toRequestBodyOrDefault()
+                val horaBody = hora.toRequestBody("text/plain".toMediaTypeOrNull())
+                val ubicacionBody = ubicacion.toRequestBody("text/plain".toMediaTypeOrNull())
+                val categoriaBody = categoria.toRequestBody("text/plain".toMediaTypeOrNull())
                 val esOnlineBody = (if (esOnline) "1" else "0").toRequestBody("text/plain".toMediaTypeOrNull())
                 
                 // Para eventos presenciales, enviamos todos los tipos de entrada
@@ -581,7 +596,7 @@ class EditarEventoViewModel : ViewModel() {
                         partesTiposEntradas.add(
                             MultipartBody.Part.createFormData(
                                 "tipos_entrada[$index][idTipoEntrada]",
-                                tiposEntradaOriginales[index].getEffectiveId().toString()
+                                tiposEntradaOriginales[index].id.toString()
                             )
                         )
                     }
@@ -636,11 +651,11 @@ class EditarEventoViewModel : ViewModel() {
                 // Crear objeto para la actualización
                 val eventoRequest = EventoRequest(
                     titulo = titulo,
-                    descripcion = descripcion?.toString() ?: "",
+                    descripcion = descripcion,
                     fecha = fechaEvento,
-                    hora = hora.orEmpty(),
-                    ubicacion = ubicacion.orEmpty(),
-                    categoria = categoria.orEmpty(),
+                    hora = hora,
+                    ubicacion = ubicacion,
+                    categoria = categoria,
                     esOnline = esOnline,
                     tiposEntrada = tiposEntradaFinal
                 )
@@ -716,9 +731,9 @@ class EditarEventoViewModel : ViewModel() {
             
             // Usar FileProvider en lugar de Uri.fromFile
             val authority = "${context.packageName}.provider"
-            imagenCamara = androidx.core.content.FileProvider.getUriForFile(context, authority, file)
+            imageUri = androidx.core.content.FileProvider.getUriForFile(context, authority, file)
             
-            return imagenCamara
+            return imageUri
         } catch (e: Exception) {
             Log.e(TAG, "Error al crear URI para imagen", e)
             return null
@@ -791,42 +806,4 @@ class EditarEventoViewModel : ViewModel() {
             horaOriginal
         }
     }
-
-    // Verifica donde se cargan los datos del evento y corrige las asignaciones
-    private fun cargarDatosEvento(evento: Evento) {
-        eventoId = evento.id
-        titulo = evento.titulo.orEmpty()
-        descripcion = evento.descripcion
-        fechaEvento = evento.fechaEvento ?: ""
-        hora = evento.hora
-        ubicacion = evento.ubicacion
-        categoria = evento.categoria
-        esOnline = evento.esOnline
-        
-        // Corregir acceso a la imagen - usar solo imagen en lugar de imagenUrl
-        if (evento.imagen != null) {
-            imagenUrl = Constants.STORAGE_URL + evento.imagen
-        }
-
-        // Cargar tipos de entrada
-        val tiposEntradaList = mutableListOf<TipoEntradaRequest>() 
-        evento.entradas?.forEach { tipoEntrada ->
-            tiposEntradaList.add(
-                TipoEntradaRequest(
-                    nombre = tipoEntrada.nombre ?: "",
-                    precio = tipoEntrada.precio?.toDoubleOrNull() ?: 0.0,
-                    cantidadDisponible = tipoEntrada.cantidadDisponible ?: 0,
-                    descripcion = tipoEntrada.descripcion ?: "",
-                    esIlimitado = tipoEntrada.esIlimitado ?: false
-                )
-            )
-        }
-        tiposEntrada = tiposEntradaList
-    }
-
-    // Verifica función que crea RequestBody
-    private fun String?.toRequestBodyOrDefault(default: String = ""): RequestBody {
-        val value = this ?: default
-        return value.toRequestBody("text/plain".toMediaTypeOrNull())
-    }
-} 
+}

@@ -102,7 +102,7 @@ fun EditarEventoScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
-            viewModel.imagenCamara?.let { uri -> viewModel.onImageSelected(uri) }
+            viewModel.imageUri?.let { viewModel.onImageSelected(it) }
         }
     }
 
@@ -203,10 +203,10 @@ fun EditarEventoScreen(
         val hour: Int
         val minute: Int
         
-        val currentTime = if (viewModel.hora?.isNotEmpty() == true) {
+        val currentTime = if (viewModel.hora.isNotEmpty()) {
             try {
-                val parts = viewModel.hora?.split(":")
-                if (parts != null && parts.size == 2) {
+                val parts = viewModel.hora.split(":")
+                if (parts.size == 2) {
                     Pair(parts[0].toInt(), parts[1].toInt())
                 } else {
                     val calendar = Calendar.getInstance()
@@ -385,7 +385,7 @@ fun EditarEventoScreen(
                 
                 // Descripción
                 OutlinedTextField(
-                    value = viewModel.descripcion.orEmpty(),
+                    value = viewModel.descripcion,
                     onValueChange = { viewModel.updateDescripcion(it) },
                     label = { Text("Descripción") },
                     placeholder = { Text("Describe tu evento") },
@@ -430,7 +430,7 @@ fun EditarEventoScreen(
                 
                 // Hora
                 OutlinedTextField(
-                    value = viewModel.hora.orEmpty(),
+                    value = viewModel.hora,
                     onValueChange = { viewModel.updateHora(it) },
                     label = { Text("Hora") },
                     placeholder = { Text("HH:MM") },
@@ -456,7 +456,7 @@ fun EditarEventoScreen(
                 
                 // Ubicación
                 OutlinedTextField(
-                    value = viewModel.ubicacion.orEmpty(),
+                    value = viewModel.ubicacion,
                     onValueChange = { viewModel.updateUbicacion(it) },
                     label = { Text("Ubicación") },
                     placeholder = { Text("Ej. Estadio Municipal") },
@@ -477,7 +477,7 @@ fun EditarEventoScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     OutlinedTextField(
-                        value = viewModel.categoria.orEmpty(),
+                        value = viewModel.categoria,
                         onValueChange = {},
                         label = { Text("Categoría") },
                         placeholder = { Text("Selecciona una categoría") },
@@ -535,82 +535,92 @@ fun EditarEventoScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 // Selección/visualización de imagen
-                Box(modifier = Modifier.fillMaxWidth()) {
-                    if (viewModel.imagenUri != null) {
-                        // Mostrar imagen seleccionada nueva
-                        AsyncImage(
-                            model = viewModel.imagenUri,
-                            contentDescription = "Imagen del evento",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        
-                        // Botón para eliminar la imagen
-                        IconButton(
-                            onClick = { viewModel.updateImagenUri(null) },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.5f),
-                                    shape = RoundedCornerShape(50)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { showImagePickerDialog = true },
+                    shape = RoundedCornerShape(8.dp),
+                    elevation = CardDefaults.cardElevation(4.dp)
+                ) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        if (viewModel.imagenUri != null) {
+                            // Mostrar imagen seleccionada nueva
+                            AsyncImage(
+                                model = viewModel.imagenUri,
+                                contentDescription = "Imagen del evento",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                            
+                            // Botón para eliminar la imagen
+                            IconButton(
+                                onClick = { viewModel.updateImagenUri(null) },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .background(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(50)
+                                    )
+                            ) {
+                                Icon(
+                                    Icons.Filled.Close,
+                                    contentDescription = "Eliminar imagen",
+                                    tint = Color.White
                                 )
-                        ) {
-                            Icon(
-                                Icons.Filled.Close,
-                                contentDescription = "Eliminar imagen",
-                                tint = Color.White
+                            }
+                        } else if (viewModel.imagenUrl != null && viewModel.imagenUrl!!.isNotEmpty()) {
+                            // Mostrar imagen actual del evento
+                            AsyncImage(
+                                model = viewModel.imagenUrl,
+                                contentDescription = "Imagen actual del evento",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp),
+                                contentScale = ContentScale.Crop
                             )
-                        }
-                    } else if (viewModel.imagenUrl != null && viewModel.imagenUrl!!.isNotEmpty()) {
-                        // Mostrar imagen actual del evento
-                        AsyncImage(
-                            model = viewModel.imagenUrl,
-                            contentDescription = "Imagen actual del evento",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(200.dp),
-                            contentScale = ContentScale.Crop
-                        )
-                        
-                        // Botón para cambiar la imagen
-                        IconButton(
-                            onClick = { showImagePickerDialog = true },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .background(
-                                    color = Color.Black.copy(alpha = 0.5f),
-                                    shape = RoundedCornerShape(50)
+                            
+                            // Botón para cambiar la imagen
+                            IconButton(
+                                onClick = { showImagePickerDialog = true },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .background(
+                                        color = Color.Black.copy(alpha = 0.5f),
+                                        shape = RoundedCornerShape(50)
+                                    )
+                            ) {
+                                Icon(
+                                    Icons.Filled.Edit,
+                                    contentDescription = "Cambiar imagen",
+                                    tint = Color.White
                                 )
-                        ) {
-                            Icon(
-                                Icons.Filled.Edit,
-                                contentDescription = "Cambiar imagen",
-                                tint = Color.White
-                            )
-                        }
-                    } else {
-                        // Mostrar opción para subir imagen
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .fillMaxHeight()
-                                .padding(32.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                Icons.Filled.Image,
-                                contentDescription = "Subir imagen",
-                                modifier = Modifier.size(48.dp),
-                                tint = Color.Gray
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Añadir imagen del evento",
-                                color = Color.Gray
-                            )
+                            }
+                        } else {
+                            // Mostrar opción para subir imagen
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                                    .padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    Icons.Filled.Image,
+                                    contentDescription = "Subir imagen",
+                                    modifier = Modifier.size(48.dp),
+                                    tint = Color.Gray
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Añadir imagen del evento",
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     }
                 }

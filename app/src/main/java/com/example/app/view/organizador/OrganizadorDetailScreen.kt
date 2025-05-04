@@ -409,7 +409,8 @@ fun OrganizadorDetailScreen(
                             primaryColor = primaryColor,
                             textPrimaryColor = textPrimaryColor,
                             textSecondaryColor = textSecondaryColor,
-                            successColor = successColor
+                            successColor = successColor,
+                            navController = navController
                         )
                     }
                 }

@@ -352,11 +352,23 @@ fun AppNavHost(
         composable(
             route = Routes.EventosCategoria.route,
             arguments = listOf(navArgument("categoria") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val categoria = backStackEntry.arguments?.getString("categoria") ?: ""
+        ) {
+            val categoria = it.arguments?.getString("categoria") ?: ""
             EventosCategoriaScreen(
-                categoria = categoria,
-                navController = navController
+                navController = navController,
+                categoria = categoria
+            )
+        }
+        
+        // Pantalla de compra de entradas
+        composable(
+            route = Routes.ComprarEntradas.route,
+            arguments = listOf(navArgument("eventoId") { type = NavType.StringType })
+        ) {
+            val eventoId = it.arguments?.getString("eventoId") ?: ""
+            ComprarEntradasScreen(
+                navController = navController,
+                eventoId = eventoId
             )
         }
     }

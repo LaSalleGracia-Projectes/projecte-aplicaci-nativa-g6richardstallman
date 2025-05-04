@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -37,7 +36,6 @@ import com.example.app.util.NotificationUtil
 import java.text.NumberFormat
 import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import com.example.app.util.isValidEventoId
 import com.example.app.util.getEventoIdErrorMessage
 import com.example.app.routes.Routes
@@ -49,13 +47,8 @@ import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.location.Geocoder
-import com.example.app.model.TipoEntrada
 import com.google.android.gms.maps.model.CameraPosition
-import android.os.Build
 import com.example.app.util.formatToCurrency
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.ui.text.style.TextOverflow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +58,6 @@ fun EventoDetailScreen(
 ) {
     val context = LocalContext.current
     val TAG = "EventoDetailScreen"
-    val coroutineScope = rememberCoroutineScope()
 
     // Verificar que el ID sea válido
     var idValido by remember { mutableStateOf(true) }
@@ -131,12 +123,9 @@ fun EventoDetailScreen(
     // Mostrar diálogo de compra si es necesario
     if (showPaymentDialog.value) {
         PaymentDialog(
-            total = viewModel.calcularTotal(),
-            enProceso = compraProcesando.value,
-            exito = compraExitosa.value,
-            mensaje = mensajeCompra.value,
-            onConfirm = { viewModel.realizarCompra() },
+            viewModel = viewModel,
             onDismiss = { viewModel.cerrarDialogoPago() },
+            formatoMoneda = formatoMoneda,
             primaryColor = primaryColor
         )
     }
@@ -332,14 +321,14 @@ fun EventoDetailScreen(
                                     .padding(horizontal = 12.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = evento.categoria.orEmpty(),
+                                    text = evento.categoria?.toString() ?: "Sin categoría",
                                     style = MaterialTheme.typography.labelLarge,
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier
                                         .clickable {
                                             navController.navigate(
-                                                com.example.app.routes.Routes.EventosCategoria.createRoute(evento.categoria.orEmpty())
+                                                com.example.app.routes.Routes.EventosCategoria.createRoute(evento.categoria ?: "Sin categoría")
                                             )
                                         }
                                 )
@@ -368,7 +357,7 @@ fun EventoDetailScreen(
                             ) {
                                 // Título
                                 Text(
-                                    text = evento.titulo.orEmpty(),
+                                    text = evento.titulo ?: "Sin título",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = textPrimaryColor
@@ -403,7 +392,7 @@ fun EventoDetailScreen(
                                             Spacer(modifier = Modifier.width(12.dp))
 
                                             Text(
-                                                text = formatDate(evento.fechaEvento.orEmpty(), true),
+                                                text = evento.fechaEvento?.let { formatDate(it, true) } ?: "Fecha no disponible",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = textPrimaryColor
                                             )
@@ -425,14 +414,16 @@ fun EventoDetailScreen(
                                             Spacer(modifier = Modifier.width(12.dp))
 
                                             // Asegurar que la hora siempre tenga formato HH:MM
-                                            val formattedHora = if (evento.hora?.contains(":") == true) {
-                                                val parts = evento.hora?.split(":")
-                                                val hours = parts?.getOrNull(0)?.padStart(2, '0') ?: "00"
-                                                val minutes = parts?.getOrNull(1)?.padStart(2, '0') ?: "00"
-                                                "$hours:$minutes"
-                                            } else {
-                                                evento.hora?.padStart(2, '0')?.plus(":00") ?: "00:00"
-                                            }
+                                            val formattedHora = evento.hora?.let { hora ->
+                                                if (hora.contains(":")) {
+                                                    val parts = hora.split(":")
+                                                    val hours = parts[0].padStart(2, '0')
+                                                    val minutes = if (parts.size > 1) parts[1].padStart(2, '0') else "00"
+                                                    "$hours:$minutes"
+                                                } else {
+                                                    hora.padStart(2, '0') + ":00"
+                                                }
+                                            } ?: "Hora no disponible"
 
                                             Text(
                                                 text = formattedHora,
@@ -457,7 +448,7 @@ fun EventoDetailScreen(
                                             Spacer(modifier = Modifier.width(12.dp))
 
                                             Text(
-                                                text = evento.ubicacion.orEmpty(),
+                                                text = evento.ubicacion ?: "Ubicación no disponible",
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = textPrimaryColor
                                             )
@@ -485,40 +476,18 @@ fun EventoDetailScreen(
                                     geocodeError = null
                                     withContext(Dispatchers.IO) {
                                         try {
-                                            // Verificar que ubicación no sea nula o vacía
-                                            val ubicacion = evento.ubicacion?.takeIf { it.isNotBlank() } ?: "Madrid, España"
+                                            val ubicacion = evento.ubicacion ?: return@withContext
                                             val geocoder = Geocoder(context, Locale.getDefault())
-                                            
-                                            // Usar el método moderno de Geocoder si está disponible (API 33+)
-                                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                                geocoder.getFromLocationName(ubicacion, 1) { addresses ->
-                                                    if (addresses.isNotEmpty()) {
-                                                        val address = addresses[0]
-                                                        val newLatLng = LatLng(address.latitude, address.longitude)
-                                                        latLng = newLatLng
-                                                        
-                                                        // Necesitamos ejecutar esto en el hilo principal
-                                                        coroutineScope.launch(Dispatchers.Main) {
-                                                            cameraPositionState.position = CameraPosition.fromLatLngZoom(newLatLng, 15f)
-                                                        }
-                                                    } else {
-                                                        geocodeError = "No se pudo encontrar la localización."
-                                                    }
+                                            val addresses = geocoder.getFromLocationName(ubicacion, 1)
+                                            if (!addresses.isNullOrEmpty()) {
+                                                val address = addresses[0]
+                                                val newLatLng = LatLng(address.latitude, address.longitude)
+                                                latLng = newLatLng
+                                                withContext(Dispatchers.Main) {
+                                                    cameraPositionState.position = CameraPosition.fromLatLngZoom(newLatLng, 15f)
                                                 }
                                             } else {
-                                                // Método antiguo para versiones anteriores
-                                                @Suppress("DEPRECATION")
-                                                val addresses = geocoder.getFromLocationName(ubicacion, 1)
-                                                if (!addresses.isNullOrEmpty()) {
-                                                    val address = addresses[0]
-                                                    val newLatLng = LatLng(address.latitude, address.longitude)
-                                                    latLng = newLatLng
-                                                    withContext(Dispatchers.Main) {
-                                                        cameraPositionState.position = CameraPosition.fromLatLngZoom(newLatLng, 15f)
-                                                    }
-                                                } else {
-                                                    geocodeError = "No se pudo encontrar la localización."
-                                                }
+                                                geocodeError = "No se pudo encontrar la localización."
                                             }
                                         } catch (e: Exception) {
                                             geocodeError = "Error al obtener la localización: ${e.localizedMessage}"
@@ -539,8 +508,8 @@ fun EventoDetailScreen(
                                         ) {
                                             Marker(
                                                 state = com.google.maps.android.compose.MarkerState(position = latLng!!),
-                                                title = evento.titulo.orEmpty(),
-                                                snippet = evento.ubicacion.orEmpty()
+                                                title = evento.titulo,
+                                                snippet = evento.ubicacion
                                             )
                                         }
                                     }
@@ -590,45 +559,19 @@ fun EventoDetailScreen(
                                                 .fillMaxWidth()
                                                 .padding(16.dp)
                                         ) {
-                                            // Mostrar datos del organizador
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                // Avatar o icono del organizador
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(40.dp)
-                                                        .clip(CircleShape)
-                                                        .background(primaryColor.copy(alpha = 0.8f)),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(
-                                                        text = organizador.nombre?.firstOrNull()?.uppercase() ?: "O",
-                                                        style = MaterialTheme.typography.bodyLarge,
-                                                        color = Color.White,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
-
-                                                Spacer(modifier = Modifier.width(12.dp))
-
-                                                Column {
-                                                    // Nombre del organizador
-                                                    Text(
-                                                        text = organizador.nombre.orEmpty(),
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        fontWeight = FontWeight.Medium,
-                                                        color = textPrimaryColor
-                                                    )
-                                                    organizador.user?.let { user ->
-                                                        Spacer(modifier = Modifier.height(4.dp))
-                                                        Text(
-                                                            text = user.nombre.orEmpty(),
-                                                            style = MaterialTheme.typography.bodyMedium,
-                                                            color = textSecondaryColor
-                                                        )
-                                                    }
-                                                }
+                                            Text(
+                                                text = organizador.nombre,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Medium,
+                                                color = textPrimaryColor
+                                            )
+                                            organizador.user?.let { user ->
+                                                Spacer(modifier = Modifier.height(4.dp))
+                                                Text(
+                                                    text = user.nombre,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    color = textSecondaryColor
+                                                )
                                             }
                                         }
                                     }
@@ -646,7 +589,7 @@ fun EventoDetailScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
 
                                 Text(
-                                    text = evento.descripcion?.toString().orEmpty(),
+                                    text = evento.descripcion ?: "Sin descripción",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = textSecondaryColor
                                 )
@@ -654,7 +597,8 @@ fun EventoDetailScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
 
                                 // Tipos de entrada (solo si no es online o tiene entradas)
-                                if (!evento.esOnline && viewModel.tiposEntrada.isNotEmpty()) {
+                                val esOnline = evento.esOnline ?: false
+                                if (!esOnline && viewModel.tiposEntrada.isNotEmpty()) {
                                     Text(
                                         text = "Tipos de entrada",
                                         style = MaterialTheme.typography.titleLarge,
@@ -666,13 +610,116 @@ fun EventoDetailScreen(
 
                                     // Lista de tipos de entrada
                                     viewModel.tiposEntrada.forEach { tipoEntrada ->
-                                        TipoEntradaItem(
-                                            tipoEntrada = tipoEntrada,
-                                            cantidad = viewModel.obtenerCantidad(tipoEntrada.id),
-                                            onIncrement = { viewModel.incrementarCantidad(tipoEntrada.id) },
-                                            onDecrement = { viewModel.decrementarCantidad(tipoEntrada.id) },
-                                            primaryColor = primaryColor
-                                        )
+                                        Card(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 8.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = Color(0xFFF5F5F5)
+                                            ),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.padding(16.dp)
+                                            ) {
+                                                // Nombre y descripción
+                                                Text(
+                                                    text = tipoEntrada.nombre ?: "Sin nombre",
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+
+                                                if (tipoEntrada.descripcion != null) {
+                                                    Spacer(modifier = Modifier.height(4.dp))
+                                                    Text(
+                                                        text = tipoEntrada.descripcion,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = textSecondaryColor
+                                                    )
+                                                }
+
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                // Disponibilidad
+                                                val disponibilidadText = if (tipoEntrada.esIlimitado == true) {
+                                                    "Disponibilidad: Ilimitada"
+                                                } else {
+                                                    val disponibles = tipoEntrada.disponibilidad ?:
+                                                    (tipoEntrada.cantidadDisponible?.minus(tipoEntrada.entradasVendidas ?: 0) ?: 0)
+                                                    "Disponibles: $disponibles"
+                                                }
+
+                                                Text(
+                                                    text = disponibilidadText,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = textSecondaryColor
+                                                )
+
+                                                Spacer(modifier = Modifier.height(12.dp))
+
+                                                // Fila de precio y controles
+                                                Row(
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                    // Precio del tipo de entrada
+                                                    val precio = tipoEntrada.precio?.toDoubleOrNull() ?: 0.0
+                                                    Text(
+                                                        text = formatoMoneda.format(precio),
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = primaryColor
+                                                    )
+
+                                                    // Cantidad actual
+                                                    val cantidad = viewModel.obtenerCantidad(tipoEntrada.id)
+
+                                                    // Control de cantidad
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.Center,
+                                                        modifier = Modifier
+                                                            .background(Color(0xFFF0F0F0), RoundedCornerShape(8.dp))
+                                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                            .height(44.dp)
+                                                    ) {
+                                                        IconButton(
+                                                            onClick = { viewModel.decrementarCantidad(tipoEntrada.id) },
+                                                            enabled = cantidad > 0,
+                                                            modifier = Modifier.size(42.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Remove,
+                                                                contentDescription = "Disminuir",
+                                                                tint = if (cantidad > 0) primaryColor else Color.Gray.copy(alpha = 0.5f),
+                                                                modifier = Modifier.size(30.dp)
+                                                            )
+                                                        }
+
+                                                        Text(
+                                                            text = if (cantidad > 0) "${cantidad}x" else "0",
+                                                            style = MaterialTheme.typography.bodyLarge,
+                                                            fontWeight = FontWeight.Bold,
+                                                            modifier = Modifier.padding(horizontal = 12.dp),
+                                                            fontSize = 20.sp
+                                                        )
+
+                                                        IconButton(
+                                                            onClick = { viewModel.incrementarCantidad(tipoEntrada.id) },
+                                                            modifier = Modifier.size(42.dp)
+                                                        ) {
+                                                            Icon(
+                                                                imageVector = Icons.Default.Add,
+                                                                contentDescription = "Aumentar",
+                                                                tint = primaryColor,
+                                                                modifier = Modifier.size(30.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
 
                                     // Mostrar total y contador de entradas
@@ -725,7 +772,7 @@ fun EventoDetailScreen(
                                             }
                                         }
                                     }
-                                } else if (!evento.esOnline && evento.entradas.isNotEmpty()) {
+                                } else if (!esOnline && (evento.entradas?.isNotEmpty() == true)) {
                                     // Fallback si no se pudieron cargar los tipos detallados pero hay entradas básicas
                                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -825,201 +872,178 @@ fun EventoDetailScreen(
 }
 
 @Composable
-fun TipoEntradaItem(
-    tipoEntrada: TipoEntrada,
-    cantidad: Int,
-    onIncrement: () -> Unit,
-    onDecrement: () -> Unit,
+fun PaymentDialog(
+    viewModel: EventoDetailViewModel,
+    onDismiss: () -> Unit,
+    formatoMoneda: NumberFormat,
     primaryColor: Color
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(
+    val compraProcesando = viewModel.compraProcesando.collectAsState()
+    val compraExitosa = viewModel.compraExitosa.collectAsState()
+    val mensajeCompra = viewModel.mensajeCompra.collectAsState()
+
+    Dialog(onDismissRequest = {
+        if (!compraProcesando.value) {
+            onDismiss()
+        }
+    }) {
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Título
                 Text(
-                    text = tipoEntrada.nombre?.takeIf { it.isNotBlank() } ?: "Entrada General",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Text(
-                    text = tipoEntrada.precio?.formatToCurrency() ?: "0,00 €",
-                    style = MaterialTheme.typography.titleMedium,
+                    text = if (compraExitosa.value) "¡Compra Exitosa!" else "Confirmar Compra",
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = primaryColor
+                    color = if (compraExitosa.value) Color(0xFF4CAF50) else primaryColor
                 )
-            }
-            
-            if (!tipoEntrada.descripcion.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = tipoEntrada.descripcion ?: "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Mostrar disponibilidad
-                val disponibilidad = when {
-                    tipoEntrada.esIlimitado == true -> "Entradas ilimitadas"
-                    tipoEntrada.cantidadDisponible != null -> "Disponibles: ${tipoEntrada.cantidadDisponible}"
-                    else -> "Disponibilidad no especificada"
-                }
-                Text(
-                    text = disponibilidad,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-                
-                // Selector de cantidad
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onDecrement,
-                        enabled = cantidad > 0,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Remove,
-                            contentDescription = "Decrementar",
-                            tint = if (cantidad > 0) primaryColor else Color.Gray
-                        )
-                    }
-                    
-                    Text(
-                        text = cantidad.toString(),
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(horizontal = 12.dp)
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                if (compraExitosa.value) {
+                    // Icono de éxito
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Compra exitosa",
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(64.dp)
                     )
-                    
-                    IconButton(
-                        onClick = onIncrement,
-                        enabled = true,
-                        modifier = Modifier.size(36.dp)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Mensaje de éxito
+                    Text(
+                        text = mensajeCompra.value,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                } else if (compraProcesando.value) {
+                    // Indicador de carga
+                    CircularProgressIndicator(
+                        color = primaryColor
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Procesando tu compra...",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center
+                    )
+                } else {
+                    // Resumen de la compra
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Incrementar",
-                            tint = primaryColor
+                        // Lista de entradas seleccionadas
+                        viewModel.tiposEntrada.forEach { tipoEntrada ->
+                            val cantidad = viewModel.obtenerCantidad(tipoEntrada.id)
+                            if (cantidad > 0) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "${tipoEntrada.nombre} x $cantidad",
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+
+                                    val precio = tipoEntrada.precio?.toDoubleOrNull() ?: 0.0
+                                    Text(
+                                        text = formatoMoneda.format(precio * cantidad),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Divider(
+                            modifier = Modifier.padding(vertical = 16.dp),
+                            color = Color.LightGray
                         )
+
+                        // Total
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Total",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = formatoMoneda.format(viewModel.calcularTotal()),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = primaryColor
+                            )
+                        }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Botones de acción
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = primaryColor
+                            )
+                        ) {
+                            Text(text = "Cancelar")
+                        }
+
+                        Button(
+                            onClick = { viewModel.realizarCompra() },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = primaryColor
+                            )
+                        ) {
+                            Text(text = "Confirmar")
+                        }
+                    }
+                }
+
+                if (mensajeCompra.value.isNotEmpty() && !compraExitosa.value) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = mensajeCompra.value,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Red,
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
     }
-}
-
-@Composable
-fun PaymentDialog(
-    total: Double,
-    enProceso: Boolean,
-    exito: Boolean,
-    mensaje: String,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-    primaryColor: Color
-) {
-    AlertDialog(
-        onDismissRequest = { if (!enProceso) onDismiss() },
-        title = {
-            Text(
-                text = if (exito) "¡Compra Exitosa!" else "Confirmar Compra",
-                fontWeight = FontWeight.Bold,
-                color = if (exito) Color.Green else primaryColor
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                when {
-                    enProceso -> {
-                        CircularProgressIndicator(color = primaryColor)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = "Procesando tu compra...",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    exito -> {
-                        Icon(
-                            imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Compra exitosa",
-                            tint = Color.Green,
-                            modifier = Modifier.size(64.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            text = mensaje,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    else -> {
-                        if (mensaje.isNotEmpty()) {
-                            Text(
-                                text = mensaje,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-                        }
-
-                        Text(
-                            text = "Total a pagar: ${formatToCurrency(total)}",
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            if (!enProceso) {
-                Button(
-                    onClick = { if (exito) onDismiss() else onConfirm() },
-                    colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
-                ) {
-                    Text(if (exito) "Cerrar" else "Confirmar")
-                }
-            }
-        },
-        dismissButton = {
-            if (!enProceso && !exito) {
-                TextButton(onClick = onDismiss) {
-                    Text("Cancelar")
-                }
-            }
-        }
-    )
-}
-
-// Función para formatear un string a formato moneda
-private fun String?.formatToCurrency(): String {
-    val value = this?.toDoubleOrNull() ?: 0.0
-    val format = NumberFormat.getCurrencyInstance(Locale("es", "ES"))
-    return format.format(value)
 }
