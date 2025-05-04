@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,8 +37,11 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.app.R
 import com.example.app.routes.BottomNavigationBar
 import com.example.app.routes.Routes
+import com.example.app.view.components.CommonCenterAlignedTopAppBar
+import com.example.app.view.components.LanguageSelectorComponent
 import com.example.app.viewmodel.CompraItem
 import com.example.app.viewmodel.HistorialComprasViewModel
 import java.text.NumberFormat
@@ -122,29 +126,12 @@ fun HistorialComprasScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "MIS COMPRAS",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 22.sp
-                        ),
-                        color = Color(0xFFE53935)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color(0xFFE53935)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White
-                )
+            CommonCenterAlignedTopAppBar(
+                title = stringResource(id = R.string.my_purchases),
+                showBackButton = true,
+                onBackClick = { navController.popBackStack() },
+                contentColor = primaryColor,
+                backgroundColor = backgroundColor
             )
         },
         bottomBar = {
@@ -175,7 +162,7 @@ fun HistorialComprasScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = errorMessageState ?: "Error desconocido",
+                        text = errorMessageState ?: stringResource(id = R.string.error_unknown),
                         color = Color(0xFFE53935),
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -187,85 +174,71 @@ fun HistorialComprasScreen(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text(text = "Reintentar", color = Color.White)
-                    }
-                }
-            } else if (compras.isEmpty()) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Receipt,
-                        contentDescription = "No hay compras",
-                        modifier = Modifier
-                            .size(100.dp)
-                            .padding(16.dp),
-                        tint = Color.LightGray
-                    )
-
-                    Text(
-                        text = "No tienes compras",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = textPrimaryColor,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
-                    )
-
-                    Text(
-                        text = "Aquí aparecerán las entradas que compres para los eventos.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textSecondaryColor,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(bottom = 24.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = { navController.navigate(Routes.Eventos.route) },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = primaryColor
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Buscar eventos",
-                                tint = Color.White
-                            )
-                            Text(text = "EXPLORAR EVENTOS", color = Color.White)
-                        }
+                        Text(text = stringResource(id = R.string.retry), color = Color.White)
                     }
                 }
             } else {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(bottom = 16.dp)
                 ) {
-                    items(compras) { compra ->
-                        CompraCard(
-                            compra = compra,
-                            onCompraClick = { /* Detalles de la compra */ },
-                            onDownloadClick = { 
-                                viewModel.downloadFactura(compra.id_compra)
-                            },
-                            isDownloading = isDownloading,
-                            downloadMessageValue = downloadMessage
-                        )
-                    }
+                    // El componente de selección de idioma ya no es necesario aquí
+                    // porque ahora tenemos el botón en la barra superior
                     
-                    // Espacio final para evitar que el último elemento quede bajo la barra de navegación
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
+                    // El resto de la pantalla (sea la lista de compras o el mensaje de vacío)
+                    if (compras.isEmpty()) {
+                        // Mostrar mensaje de que no hay compras
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingCart,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(80.dp),
+                                    tint = Color.LightGray
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    text = stringResource(id = R.string.no_purchases_yet),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    textAlign = TextAlign.Center,
+                                    color = textSecondaryColor
+                                )
+                            }
+                        }
+                    } else {
+                        // Mostrar lista de compras
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(compras) { compra ->
+                                CompraCard(
+                                    compra = compra,
+                                    onCompraClick = { /* Detalles de la compra */ },
+                                    onDownloadClick = { 
+                                        viewModel.downloadFactura(compra.id_compra)
+                                    },
+                                    isDownloading = isDownloading,
+                                    downloadMessageValue = downloadMessage
+                                )
+                            }
+                            
+                            // Espacio final para evitar que el último elemento quede bajo la barra de navegación
+                            item {
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        }
                     }
                 }
             }
@@ -289,6 +262,15 @@ fun CompraCard(
         else -> Color.Gray
     }
     val imagenEvento = compra.evento?.imagen ?: ""
+    
+    // Valores en español directamente
+    val invoiceDownloadedText = "Factura descargada correctamente"
+    val downloadingText = "DESCARGANDO..."
+    val invoiceDownloadedLabel = "FACTURA DESCARGADA"
+    val downloadInvoiceText = "DESCARGAR FACTURA"
+    val eventImageDesc = "Imagen del evento"
+    val unknownEventText = "Evento desconocido"
+    val totalLabel = "Total"
 
     Card(
         modifier = Modifier
@@ -312,7 +294,7 @@ fun CompraCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = compra.evento?.nombre ?: "Evento desconocido",
+                        text = compra.evento?.nombre ?: unknownEventText,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -336,7 +318,7 @@ fun CompraCard(
                                 .apply(block = { crossfade(true) })
                                 .build()
                         ),
-                        contentDescription = "Imagen del evento",
+                        contentDescription = eventImageDesc,
                         modifier = Modifier
                             .size(50.dp)
                             .clip(RoundedCornerShape(8.dp)),
@@ -357,7 +339,7 @@ fun CompraCard(
             ) {
                 Column {
                     Text(
-                        text = "Total:",
+                        text = "$totalLabel:",
                         style = MaterialTheme.typography.bodyMedium,
                         color = textSecondaryColor
                     )
@@ -392,6 +374,9 @@ fun CompraCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
+            // Determinar el estado del botón
+            val isDownloadComplete = downloadMessageValue == invoiceDownloadedText
+            
             Button(
                 onClick = { onDownloadClick() },
                 modifier = Modifier
@@ -402,7 +387,7 @@ fun CompraCard(
                     disabledContainerColor = Color(0xFFE0E0E0)
                 ),
                 shape = RoundedCornerShape(8.dp),
-                enabled = !isDownloading && downloadMessageValue != "Factura descargada correctamente"
+                enabled = !isDownloading && !isDownloadComplete
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -414,25 +399,29 @@ fun CompraCard(
                             color = Color.White,
                             strokeWidth = 2.dp
                         )
-                    } else if (downloadMessageValue == "Factura descargada correctamente") {
+                    } else if (isDownloadComplete) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Factura descargada",
+                            contentDescription = invoiceDownloadedLabel,
                             tint = Color.White
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.Download,
-                            contentDescription = "Descargar factura",
+                            contentDescription = downloadInvoiceText,
                             tint = Color.White
                         )
                     }
+                    
+                    // Elegir el texto apropiado para el botón
+                    val buttonText = when {
+                        isDownloading -> downloadingText
+                        isDownloadComplete -> invoiceDownloadedLabel
+                        else -> downloadInvoiceText
+                    }
+                    
                     Text(
-                        text = when {
-                            isDownloading -> "DESCARGANDO..."
-                            downloadMessageValue == "Factura descargada correctamente" -> "FACTURA DESCARGADA"
-                            else -> "DESCARGAR FACTURA"
-                        },
+                        text = buttonText,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -442,14 +431,15 @@ fun CompraCard(
     }
 }
 
-@Composable
+// Función de formateo sin @Composable
 fun formateoFechaCompra(fechaCompra: String): String {
     return try {
         val formatoOriginal = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
         formatoOriginal.timeZone = TimeZone.getTimeZone("UTC")
         val fecha = formatoOriginal.parse(fechaCompra)
         
-        val formatoMostrado = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("es", "ES"))
+        val locale = Locale.getDefault()
+        val formatoMostrado = SimpleDateFormat("dd MMM yyyy, HH:mm", locale)
         formatoMostrado.format(fecha!!)
     } catch (e: Exception) {
         fechaCompra // Devolver la fecha original si hay un error

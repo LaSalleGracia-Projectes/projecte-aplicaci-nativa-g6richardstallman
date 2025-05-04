@@ -11,13 +11,40 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.app.R
 import com.example.app.viewmodel.EventosCategoriaViewModel
 import com.example.app.routes.Routes
-import com.example.app.view.favoritos.EventoCard
+import com.example.app.model.evento.CategoriaEvento
+
+/**
+ * Función auxiliar para obtener la categoría normalizada a partir de un string
+ */
+private fun obtenerCategoriaNormalizada(context: android.content.Context, categoriaValor: String): String {
+    return try {
+        val resourceId = context.resources.getIdentifier(
+            "categoria_" + categoriaValor.lowercase()
+                .replace(" ", "_")
+                .replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+                .replace("y", "").replace("&", "")
+                .trim('_'),
+            "string",
+            context.packageName
+        )
+        if (resourceId != 0) {
+            context.getString(resourceId)
+        } else {
+            categoriaValor
+        }
+    } catch (e: Exception) {
+        categoriaValor
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +56,7 @@ fun EventosCategoriaScreen(
     val eventos = viewModel.eventos
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
+    val context = LocalContext.current
 
     // Cargar eventos al entrar
     LaunchedEffect(categoria) {
@@ -41,6 +69,18 @@ fun EventosCategoriaScreen(
     val textSecondaryColor = Color.DarkGray
     val successColor = Color(0xFF4CAF50)
 
+    // Obtener el título localizado de la categoría
+    val categoriaTitulo = remember(categoria) {
+        // Intentar encontrar una categoría que coincida
+        val categoriaEnum = CategoriaEvento.fromApiValue(categoria)
+        if (categoriaEnum != null) {
+            categoriaEnum.getLocalizedValue(context)
+        } else {
+            // Si no se encuentra la categoría, usar el método auxiliar
+            obtenerCategoriaNormalizada(context, categoria)
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = backgroundColor
@@ -50,14 +90,18 @@ fun EventosCategoriaScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = categoria.uppercase(),
+                            text = categoriaTitulo.uppercase(),
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                             color = primaryColor
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = { navController.popBackStack() }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = primaryColor)
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, 
+                                contentDescription = stringResource(id = R.string.back),
+                                tint = primaryColor
+                            )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -79,12 +123,16 @@ fun EventosCategoriaScreen(
                     }
                 } else if (errorMessage != null) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: $errorMessage", color = Color.Red, modifier = Modifier.padding(16.dp))
+                        Text(
+                            text = "Error: $errorMessage", 
+                            color = Color.Red, 
+                            modifier = Modifier.padding(16.dp)
+                        )
                     }
                 } else if (eventos.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "No hay eventos en esta categoría",
+                            text = stringResource(id = R.string.no_events_in_category),
                             style = MaterialTheme.typography.bodyLarge,
                             color = textSecondaryColor
                         )
@@ -106,7 +154,8 @@ fun EventosCategoriaScreen(
                                 primaryColor = primaryColor,
                                 textPrimaryColor = textPrimaryColor,
                                 textSecondaryColor = textSecondaryColor,
-                                successColor = successColor
+                                successColor = successColor,
+                                navController = navController
                             )
                         }
                     }

@@ -27,11 +27,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.app.R
 import com.example.app.routes.BottomNavigationBar
 import com.example.app.util.SessionManager
 import com.example.app.viewmodel.CrearEventoViewModel
@@ -196,7 +198,7 @@ fun CrearEventoScreen(
             CenterAlignedTopAppBar(
                 title = { 
                     Text(
-                        text = "CREAR EVENTO",
+                        text = stringResource(id = R.string.create_event),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,

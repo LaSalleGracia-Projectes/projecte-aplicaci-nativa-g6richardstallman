@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -49,6 +50,7 @@ import com.example.app.util.GoogleCalendarHelper
 import kotlinx.coroutines.launch
 import androidx.core.content.ContextCompat
 import com.example.app.model.tickets.Ticket
+import com.example.app.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -270,7 +272,7 @@ private fun EmptyTicketsScreen(navController: NavController, primaryColor: Color
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "No tienes tickets",
+            text = stringResource(id = R.string.no_tickets),
             style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -280,7 +282,7 @@ private fun EmptyTicketsScreen(navController: NavController, primaryColor: Color
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "¡Compra entradas para los eventos disponibles!",
+            text = stringResource(id = R.string.buy_events_tickets),
             style = MaterialTheme.typography.bodyLarge,
             color = Color.Gray,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -294,7 +296,7 @@ private fun EmptyTicketsScreen(navController: NavController, primaryColor: Color
                 containerColor = primaryColor
             )
         ) {
-            Text("Ver eventos disponibles")
+            Text(stringResource(id = R.string.view_available_events))
         }
     }
 }
@@ -344,15 +346,12 @@ private fun TicketsContent(
     if (showPermissionDialog.value) {
         AlertDialog(
             onDismissRequest = { showPermissionDialog.value = false },
-            title = { Text("Permisos necesarios") },
+            title = { Text(stringResource(id = R.string.permission_needed)) },
             text = { 
                 Column {
-                    Text("Para añadir eventos al calendario, necesitas:")
+                    Text(stringResource(id = R.string.calendar_permissions_explanation))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("1. Tener iniciada sesión con Google en el dispositivo")
-                    Text("2. Conceder permisos para acceder al calendario")
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Esto permitirá a la aplicación crear eventos en tu Google Calendar.")
+                    Text(stringResource(id = R.string.calendar_will_allow))
                 }
             },
             confirmButton = {
@@ -360,12 +359,12 @@ private fun TicketsContent(
                     calendarPermissionLauncher.launch(android.Manifest.permission.WRITE_CALENDAR)
                     showPermissionDialog.value = false
                 }) {
-                    Text("Conceder permisos")
+                    Text(stringResource(id = R.string.grant_permissions))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPermissionDialog.value = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(id = R.string.cancel))
                 }
             }
         )
@@ -375,12 +374,12 @@ private fun TicketsContent(
     if (showGoogleAccountDialog.value) {
         AlertDialog(
             onDismissRequest = { showGoogleAccountDialog.value = false },
-            title = { Text("Cuenta de Google requerida") },
+            title = { Text(stringResource(id = R.string.google_account_required)) },
             text = { 
                 Column {
-                    Text("No se ha encontrado una cuenta de Google válida en el dispositivo.")
+                    Text(stringResource(id = R.string.no_google_account_found))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Para añadir eventos al calendario, necesitas iniciar sesión con una cuenta de Google en los ajustes del dispositivo.")
+                    Text(stringResource(id = R.string.google_account_needed))
                 }
             },
             confirmButton = {
@@ -395,12 +394,12 @@ private fun TicketsContent(
                     }
                     showGoogleAccountDialog.value = false
                 }) {
-                    Text("Abrir ajustes")
+                    Text(stringResource(id = R.string.open_settings))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showGoogleAccountDialog.value = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(id = R.string.cancel))
                 }
             }
         )
@@ -451,6 +450,7 @@ private fun TicketsContent(
                         }
                     } catch (e: Exception) {
                         Log.e("MisTicketsScreen", "Error al intentar abrir intent de calendario: ${e.message}", e)
+                        // No usar stringResource aquí, en su lugar usar un mensaje directo
                         viewModel.setError("Error al abrir calendario: ${e.message}")
                     }
                 },
@@ -680,9 +680,7 @@ fun formatPrice(price: Double): String {
 fun TicketCard(
     ticket: Ticket,
     onTicketClick: (Ticket) -> Unit,
-    viewModel: TicketsViewModel = viewModel(
-        factory = TicketsViewModelFactory(LocalContext.current.applicationContext as android.app.Application)
-    )
+    viewModel: TicketsViewModel
 ) {
     val isDownloading by viewModel.isDownloadingPdf.collectAsState()
     val downloadMessage by viewModel.downloadMessage.collectAsState()

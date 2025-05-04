@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -197,7 +198,7 @@ private fun LoginContent(
                 
                 // Título de login
                 Text(
-                    text = "Iniciar Sesión",
+                    text = stringResource(id = R.string.login),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -210,7 +211,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = viewModel.email,
                     onValueChange = { viewModel.email = it },
-                    label = { Text("Email") },
+                    label = { Text(stringResource(id = R.string.email)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -230,7 +231,7 @@ private fun LoginContent(
                 OutlinedTextField(
                     value = viewModel.password,
                     onValueChange = { viewModel.password = it },
-                    label = { Text("Contraseña") },
+                    label = { Text(stringResource(id = R.string.password)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     visualTransformation = if (viewModel.passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -242,7 +243,10 @@ private fun LoginContent(
                         IconButton(onClick = { viewModel.passwordVisible = !viewModel.passwordVisible }) {
                             Icon(
                                 imageVector = if (viewModel.passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (viewModel.passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                                contentDescription = if (viewModel.passwordVisible) 
+                                    stringResource(id = R.string.hide_password) 
+                                else 
+                                    stringResource(id = R.string.show_password),
                                 tint = Color(0xFFE53935)
                             )
                         }
@@ -263,7 +267,7 @@ private fun LoginContent(
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text(
-                        text = "¿Olvidaste tu contraseña?",
+                        text = stringResource(id = R.string.forgot_password),
                         color = Color(0xFFE53935)
                     )
                 }
@@ -280,7 +284,7 @@ private fun LoginContent(
                     )
                 ) {
                     Text(
-                        text = "Iniciar Sesión",
+                        text = stringResource(id = R.string.login),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -301,7 +305,7 @@ private fun LoginContent(
                         color = Color.LightGray
                     )
                     Text(
-                        text = "O",
+                        text = stringResource(id = R.string.or),
                         modifier = Modifier.padding(horizontal = 8.dp),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
@@ -338,7 +342,7 @@ private fun LoginContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Continuar con Google",
+                            text = stringResource(id = R.string.continue_with_google),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Medium
                             ),
@@ -365,7 +369,7 @@ private fun LoginContent(
                     )
                 ) {
                     Text(
-                        text = "Crear Cuenta",
+                        text = stringResource(id = R.string.create_account),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -376,7 +380,7 @@ private fun LoginContent(
                 
                 // Copyright
                 Text(
-                    text = "© 2025 EventFlix. Todos los derechos reservados.",
+                    text = stringResource(id = R.string.copyright),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     textAlign = TextAlign.Center,
@@ -422,7 +426,7 @@ private fun ErrorDialog(
         onDismissRequest = onDismiss,
         title = { 
             Text(
-                text = "Error",
+                text = stringResource(id = R.string.error),
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -438,7 +442,7 @@ private fun ErrorDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Aceptar",
+                    text = stringResource(id = R.string.accept),
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold
                     ),

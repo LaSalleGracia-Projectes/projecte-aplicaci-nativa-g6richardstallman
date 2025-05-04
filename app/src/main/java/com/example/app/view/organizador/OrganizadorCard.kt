@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.app.model.Organizador
 import coil.compose.SubcomposeAsyncImage
+import com.example.app.R
 
 @Composable
 fun OrganizadorCard(
@@ -56,7 +58,7 @@ fun OrganizadorCard(
                     .data(organizador.obtenerAvatarUrl())
                     .crossfade(true)
                     .build(),
-                contentDescription = "Avatar de ${organizador.nombre}",
+                contentDescription = stringResource(R.string.organizer_avatar_desc, organizador.nombre),
                 contentScale = ContentScale.Crop,
                 loading = {
                     CircularProgressIndicator(
@@ -67,7 +69,7 @@ fun OrganizadorCard(
                 error = {
                     Icon(
                         Icons.Default.Person,
-                        contentDescription = "Avatar por defecto",
+                        contentDescription = stringResource(R.string.default_avatar),
                         tint = Color.White,
                         modifier = Modifier.size(30.dp)
                     )
@@ -108,7 +110,7 @@ fun OrganizadorCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Favorito",
+                            text = stringResource(R.string.favorite),
                             fontSize = 12.sp,
                             color = Color(0xFFFF0000),
                             fontWeight = FontWeight.Medium
@@ -127,7 +129,7 @@ fun OrganizadorCard(
                 }
                 
                 Text(
-                    text = "Tel: ${organizador.telefonoContacto}",
+                    text = stringResource(R.string.organizer_phone, organizador.telefonoContacto),
                     fontSize = 14.sp,
                     color = textSecondaryColor
                 )
@@ -145,7 +147,7 @@ fun OrganizadorCard(
             ) {
                 Icon(
                     imageVector = if (organizador.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = if (organizador.isFavorite) "Quitar de favoritos" else "Añadir a favoritos",
+                    contentDescription = if (organizador.isFavorite) stringResource(R.string.remove_favorite) else stringResource(R.string.add_favorite),
                     tint = if (organizador.isFavorite) Color(0xFFFF0000) else textSecondaryColor,
                     modifier = Modifier.size(28.dp)
                 )

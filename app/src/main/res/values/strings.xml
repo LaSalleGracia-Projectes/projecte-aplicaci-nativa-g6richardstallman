@@ -1,3 +1,275 @@
 <resources>
     <string name="app_name">app</string>
+    
+    <!-- Comunes -->
+    <string name="back">Volver</string>
+    <string name="retry">Reintentar</string>
+    <string name="loading">Cargando...</string>
+    <string name="error_unknown">Error desconocido</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="accept">Aceptar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="unknown_event">Evento desconocido</string>
+    <string name="downloading">DESCARGANDO...</string>
+    <string name="invoice_downloaded">FACTURA DESCARGADA</string>
+    <string name="invoice_downloaded_successfully">Factura descargada correctamente</string>
+    <string name="permission_denied_invoice">Permiso rechazado. No se podrá guardar la factura.</string>
+    <string name="no_purchases_yet">No has realizado ninguna compra aún</string>
+    <string name="restarting_activity_language">Reiniciando actividad para aplicar idioma: %1$s</string>
+    <string name="error_activity_not_found">No se pudo obtener la actividad para reiniciar</string>
+    <string name="applying_language">Aplicando idioma: %1$s</string>
+    
+    <!-- Favoritos -->
+    <string name="my_favorites">MIS FAVORITOS</string>
+    <string name="reload_favorites">Recargar favoritos</string>
+    <string name="events_tab">Eventos</string>
+    <string name="organizers_tab">Organizadores</string>
+    <string name="no_favorite_events">No tienes eventos favoritos</string>
+    <string name="no_favorite_organizers">No tienes organizadores favoritos</string>
+    <string name="explore_events">Explorar eventos</string>
+    <string name="organizers_favorites_count">Organizadores favoritos: %1$d</string>
+    <string name="update_favorites">Actualizar favoritos</string>
+    <string name="organizers_explanation">Explora los eventos para encontrar organizadores que te interesen y márcalos como favoritos.</string>
+    <string name="event_image">Imagen del evento</string>
+    <string name="refresh">Refrescar</string>
+    <string name="not_available">No disponible</string>
+    <string name="free">Gratuito</string>
+    <string name="favorite_events">Eventos favoritos</string>
+    <string name="favorite_organizers">Organizadores favoritos</string>
+    <string name="add_favorite">Añadir a favoritos</string>
+    <string name="remove_favorite">Quitar de favoritos</string>
+    <string name="empty_favorites">No tienes favoritos</string>
+    <string name="favorite">Favorito</string>
+    <string name="organizer_avatar_desc">Avatar de %1$s</string>
+    <string name="default_avatar">Avatar por defecto</string>
+    <string name="organizer_phone">Tel: %1$s</string>
+    
+    <!-- Logs -->
+    <string name="app_initialized_correctly">Aplicación inicializada correctamente</string>
+    <string name="initializing_session_manager">Inicializando SessionManager...</string>
+    <string name="session_manager_initialized">SessionManager inicializado correctamente</string>
+    <string name="initializing_token_manager">Inicializando TokenManager...</string>
+    <string name="token_manager_initialized">TokenManager inicializado correctamente</string>
+    <string name="language_loaded">Idioma cargado: %1$s</string>
+    <string name="error_initializing_managers">Error al inicializar managers: %1$s</string>
+    
+    <!-- Inicio de sesión y registro -->
+    <string name="login">Iniciar sesión</string>
+    <string name="register">Registrarse</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="forgot_password">¿Olvidaste tu contraseña?</string>
+    <string name="reset_password">Restablecer contraseña</string>
+    <string name="no_account">¿No tienes una cuenta?</string>
+    <string name="name">Nombre</string>
+    <string name="surname">Apellidos</string>
+    <string name="confirm_password">Confirmar contraseña</string>
+    
+    <!-- Navegación principal -->
+    <string name="home">Inicio</string>
+    <string name="profile">Perfil</string>
+    <string name="favorites">Favoritos</string>
+    <string name="events">Eventos</string>
+    <string name="my_events">Mis eventos</string>
+    <string name="my_tickets">Mis entradas</string>
+    <string name="purchase_history">Historial de compras</string>
+    <string name="settings">Configuración</string>
+    <string name="logout">Cerrar sesión</string>
+    
+    <!-- Eventos -->
+    <string name="event_detail">Detalle del evento</string>
+    <string name="date">Fecha</string>
+    <string name="time">Hora</string>
+    <string name="location">Ubicación</string>
+    <string name="description">Descripción</string>
+    <string name="price">Precio</string>
+    <string name="buy_tickets">Comprar entradas</string>
+    <string name="available_tickets">Entradas disponibles</string>
+    <string name="select_tickets">Seleccionar entradas</string>
+    <string name="total">Total</string>
+    <string name="purchase">Comprar</string>
+    <string name="create_event">Crear evento</string>
+    <string name="edit_event">Editar evento</string>
+    <string name="event_name">Nombre del evento</string>
+    <string name="event_category">Categoría</string>
+    <string name="upload_image">Subir imagen</string>
+    <string name="event_capacity">Capacidad</string>
+    <string name="organizer">Organizador</string>
+    
+    <!-- Compras y entradas -->
+    <string name="my_purchases">MIS COMPRAS</string>
+    <string name="purchase_details">Detalles de la compra</string>
+    <string name="purchase_date">Fecha de compra</string>
+    <string name="purchase_status">Estado</string>
+    <string name="purchase_amount">Importe</string>
+    <string name="download_invoice">DESCARGAR FACTURA</string>
+    <string name="tickets">Entradas</string>
+    <string name="scan_ticket">Escanear entrada</string>
+    <string name="ticket_valid">Entrada válida</string>
+    <string name="ticket_used">Entrada ya usada</string>
+    <string name="ticket_invalid">Entrada inválida</string>
+    
+    <!-- Compra de entradas -->
+    <string name="buy_tickets_title">COMPRAR ENTRADAS</string>
+    <string name="select_your_tickets">Selecciona tus entradas</string>
+    <string name="selected_tickets">Entradas seleccionadas: %1$d</string>
+    <string name="buy_now">COMPRAR AHORA</string>
+    <string name="select_at_least_one_ticket">Selecciona al menos una entrada para continuar</string>
+    <string name="general_ticket">Entrada General</string>
+    <string name="unlimited_tickets">Entradas ilimitadas</string>
+    <string name="available_tickets_count">Disponibles: %1$d</string>
+    <string name="availability_not_specified">Disponibilidad no especificada</string>
+    <string name="decrease">Decrementar</string>
+    <string name="increase">Incrementar</string>
+    <string name="confirm_purchase">Confirmar Compra</string>
+    <string name="successful_purchase">¡Compra Exitosa!</string>
+    <string name="processing_purchase">Procesando tu compra...</string>
+    <string name="total_to_pay">Total a pagar: %1$s</string>
+    <string name="close">Cerrar</string>
+    <string name="confirm_button">Confirmar</string>
+    <string name="cancel_button">Cancelar</string>
+    <string name="invalid_event_id">ID de evento inválido: \'%1$s\'</string>
+    <string name="event_info_not_found">No se encontró información del evento</string>
+    <string name="event_has_tickets_types">Este evento tiene %1$d tipo(s) de entrada</string>
+    <string name="buy_button">COMPRAR</string>
+    
+    <!-- Perfil -->
+    <string name="edit_profile">Editar perfil</string>
+    <string name="edit_profile_action">Editar perfil</string>
+    <string name="change_password">Cambiar contraseña</string>
+    <string name="current_password">Contraseña actual</string>
+    <string name="new_password">Nueva contraseña</string>
+    <string name="save_changes">Guardar cambios</string>
+    <string name="personal_data">Datos personales</string>
+    <string name="profile_picture">Foto de perfil</string>
+    <string name="my_profile">MI PERFIL</string>
+    <string name="participant">Participante</string>
+    <string name="role">Rol</string>
+    <string name="view_purchase_history">VER HISTORIAL DE COMPRAS</string>
+    
+    <!-- Idiomas -->
+    <string name="language">Idioma</string>
+    <string name="spanish">Español</string>
+    <string name="english">Inglés</string>
+    <string name="catalan">Catalán</string>
+    <string name="change_language">Cambiar idioma</string>
+    <string name="select_language">Seleccionar idioma</string>
+    
+    <!-- EventosScreen -->
+    <string name="events_title">EVENTOS</string>
+    <string name="search_events">Buscar eventos</string>
+    <string name="clear_search">Limpiar búsqueda</string>
+    <string name="no_events_in_category">No hay eventos en esta categoría</string>
+    
+    <!-- ForgotPasswordScreen -->
+    <string name="recover_password">Recuperar Contraseña</string>
+    <string name="recover_password_explanation">Introduce tu correo electrónico y tu DNI o teléfono para recuperar tu contraseña</string>
+    <string name="dni_or_phone">DNI o Teléfono</string>
+    <string name="your_password_is">Tu contraseña es:</string>
+    <string name="back_to_login">Volver a Iniciar Sesión</string>
+    
+    <!-- LoginScreen -->
+    <string name="or">O</string>
+    <string name="continue_with_google">Continuar con Google</string>
+    <string name="create_account">Crear Cuenta</string>
+    <string name="copyright">© 2025 EventFlix. Todos los derechos reservados.</string>
+    <string name="hide_password">Ocultar contraseña</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="error">Error</string>
+    
+    <!-- HistorialComprasScreen y MisTicketsScreen -->
+    <string name="download_ticket">Descargar entrada</string>
+    <string name="ticket_downloaded">Entrada descargada</string>
+    <string name="downloading_ticket">Descargando entrada...</string>
+    <string name="add_to_calendar">Añadir al calendario</string>
+    <string name="calendar">Calendario</string>
+    <string name="permission_needed">Permisos necesarios</string>
+    <string name="calendar_permissions_explanation">Para añadir eventos al calendario, necesitas:\n1. Tener iniciada sesión con Google en el dispositivo\n2. Conceder permisos para acceder al calendario</string>
+    <string name="calendar_will_allow">Esto permitirá a la aplicación crear eventos en tu Google Calendar.</string>
+    <string name="grant_permissions">Conceder permisos</string>
+    <string name="google_account_required">Cuenta de Google requerida</string>
+    <string name="no_google_account_found">No se ha encontrado una cuenta de Google válida en el dispositivo.</string>
+    <string name="google_account_needed">Para añadir eventos al calendario, necesitas iniciar sesión con una cuenta de Google en los ajustes del dispositivo.</string>
+    <string name="open_settings">Abrir ajustes</string>
+    <string name="calendar_permissions_required">Se requieren permisos de calendario para esta función</string>
+    <string name="settings_open_error">No se pudieron abrir los ajustes de cuentas</string>
+    <string name="no_tickets">No tienes tickets</string>
+    <string name="buy_events_tickets">¡Compra entradas para los eventos disponibles!</string>
+    <string name="view_available_events">Ver eventos disponibles</string>
+    
+    <!-- MisEventosScreen -->
+    <string name="my_events_title">MIS EVENTOS</string>
+    <string name="delete_event">Eliminar evento</string>
+    <string name="delete_event_confirmation">¿Estás seguro que deseas eliminar el evento \'%1$s\'? Esta acción no se puede deshacer.</string>
+    <string name="no_events_created">No has creado ningún evento todavía</string>
+    <string name="create_first_event">Crear mi primer evento</string>
+    <string name="error_opening_edit">Error al abrir pantalla de edición: %1$s</string>
+    <string name="organizers_only">Esta sección está disponible solo para organizadores.</string>
+    
+    <!-- ProfileScreen -->
+    <string name="session_expired">Tu sesión ha expirado. Por favor, inicia sesión nuevamente</string>
+    <string name="profile_load_error">No se pudo cargar la información del perfil</string>
+    <string name="personal_information">Información Personal</string>
+    <string name="not_specified">No especificado</string>
+    <string name="organization_name">Nombre de la organización</string>
+    <string name="contact_phone">Teléfono de contacto</string>
+    <string name="change_password_title">CAMBIAR CONTRASEÑA</string>
+    <string name="delete_account_title">ELIMINAR CUENTA</string>
+    
+    <!-- HistorialComprasViewModel -->
+    <string name="no_session_started">No se ha iniciado sesión</string>
+    <string name="server_connection_error">Error de conexión al servidor</string>
+    <string name="could_not_get_purchases">No se pudieron obtener las compras</string>
+    <string name="no_permission">No tienes permiso para acceder a esta información</string>
+    <string name="no_purchases_found">No se encontraron compras</string>
+    <string name="server_error">Error interno del servidor</string>
+    <string name="history_load_error">Error al cargar el historial: %1$d</string>
+    <string name="connection_error">Error de conexión: %1$s</string>
+    <string name="permission_needed_to_save">Se necesita permiso para guardar archivos</string>
+    <string name="invoice_generation_error">Error de conexión al generar la factura</string>
+    <string name="purchase_not_found">Compra no encontrada</string>
+    <string name="error_code">Error: %1$d</string>
+    <string name="empty_invoice_response_error">Error: Respuesta de factura vacía</string>
+    <string name="invalid_pdf_error">Error: El servidor no devolvió un PDF válido</string>
+    <string name="empty_file_error">El archivo descargado está vacío</string>
+    <string name="invoice_saved_in_downloads">Factura guardada en Descargas. No se pudo abrir automáticamente.</string>
+    <string name="save_invoice_error">Error al guardar la factura: %1$s</string>
+    <string name="empty_server_response_error">Error: Respuesta vacía del servidor</string>
+    <string name="invoice_not_found_error">Factura no encontrada</string>
+    <string name="download_error">Error al descargar: %1$s</string>
+    
+    <!-- Categorías de eventos -->
+    <string name="categoria_arte_cultura">Arte y Cultura</string>
+    <string name="categoria_belleza_bienestar">Belleza y Bienestar</string>
+    <string name="categoria_charlas_conferencias">Charlas y Conferencias</string>
+    <string name="categoria_cine">Cine</string>
+    <string name="categoria_comedia">Comedia</string>
+    <string name="categoria_conciertos">Conciertos</string>
+    <string name="categoria_deportes">Deportes</string>
+    <string name="categoria_discoteca">Discoteca</string>
+    <string name="categoria_educacion">Educación</string>
+    <string name="categoria_empresarial">Empresarial</string>
+    <string name="categoria_exposiciones">Exposiciones</string>
+    <string name="categoria_familiar">Familiar</string>
+    <string name="categoria_festivales">Festivales</string>
+    <string name="categoria_gastronomia">Gastronomía</string>
+    <string name="categoria_infantil">Infantil</string>
+    <string name="categoria_moda">Moda</string>
+    <string name="categoria_musica_directo">Música en Directo</string>
+    <string name="categoria_networking">Networking</string>
+    <string name="categoria_ocio_nocturno">Ocio Nocturno</string>
+    <string name="categoria_presentaciones">Presentaciones</string>
+    <string name="categoria_restaurantes">Restaurantes</string>
+    <string name="categoria_salud_deporte">Salud y Deporte</string>
+    <string name="categoria_seminarios">Seminarios</string>
+    <string name="categoria_talleres">Talleres</string>
+    <string name="categoria_teatro">Teatro</string>
+    <string name="categoria_tecnologia">Tecnología</string>
+    <string name="categoria_turismo">Turismo</string>
+    <string name="categoria_varios">Varios</string>
 </resources>

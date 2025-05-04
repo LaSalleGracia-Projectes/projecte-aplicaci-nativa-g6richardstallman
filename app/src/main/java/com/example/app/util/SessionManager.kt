@@ -3,6 +3,7 @@ package com.example.app.util
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.example.app.MyApplication
 
 object SessionManager {
     private const val PREF_NAME = "EventFlixPrefs"
@@ -221,7 +222,31 @@ object SessionManager {
     }
     
     fun getUserLanguage(): String {
-        // Por defecto, devolvemos español
-        return "es"
+        // Usar LanguageManager para obtener el idioma configurado
+        return try {
+            // En caso de no tener contexto, devolvemos el idioma por defecto
+            if (!initialized || prefs == null) {
+                Log.d("SessionManager", "No inicializado, devolviendo idioma por defecto")
+                return LanguageManager.SPANISH
+            }
+            
+            // Obtener el contexto desde SharedPreferences
+            val context = prefs?.all?.get("dummy")?.javaClass?.classLoader?.let {
+                Class.forName("android.app.ActivityThread")
+                    .getMethod("currentApplication")
+                    .invoke(null)
+            } as? Context
+            
+            if (context != null) {
+                LanguageManager.getLanguage(context)
+            } else {
+                Log.d("SessionManager", "Contexto no disponible, devolviendo idioma por defecto")
+                LanguageManager.SPANISH
+            }
+        } catch (e: Exception) {
+            Log.e("SessionManager", "Error al obtener idioma: ${e.message}")
+            // Por defecto, devolvemos español
+            LanguageManager.SPANISH
+        }
     }
 }

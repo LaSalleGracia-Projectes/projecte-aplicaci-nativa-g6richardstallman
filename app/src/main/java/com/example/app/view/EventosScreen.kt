@@ -38,6 +38,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -128,7 +129,7 @@ fun EventosScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "EVENTOS",
+                        text = stringResource(id = R.string.events_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
@@ -180,7 +181,7 @@ fun EventosScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = errorMessage ?: "Error desconocido",
+                        text = errorMessage ?: stringResource(id = R.string.error_unknown),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Red,
                         textAlign = TextAlign.Center
@@ -210,7 +211,7 @@ fun EventosScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(8.dp),
-                                placeholder = { Text("Buscar eventos") },
+                                placeholder = { Text(stringResource(id = R.string.search_events)) },
                                 singleLine = true,
                                 trailingIcon = {
                                     if (searchText.isNotEmpty()) {
@@ -219,7 +220,7 @@ fun EventosScreen(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
-                                                contentDescription = "Limpiar búsqueda",
+                                                contentDescription = stringResource(id = R.string.clear_search),
                                                 tint = Color(0xFFE53935) // Color rojo del logo
                                             )
                                         }
@@ -297,7 +298,7 @@ fun EventoCard(
                     .data(imageUrl)
                     .crossfade(true)
                     .build(),
-                contentDescription = "Imagen del evento",
+                contentDescription = stringResource(id = R.string.event_image),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(120.dp)
@@ -319,7 +320,7 @@ fun EventoCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = evento.categoria ?: "Sin categoría",
+                        text = evento.categoria ?: stringResource(id = R.string.event_category),
                         style = MaterialTheme.typography.labelMedium,
                         color = primaryColor,
                         fontWeight = FontWeight.Medium
@@ -330,7 +331,7 @@ fun EventoCard(
                 
                 // Título del evento
                 Text(
-                    text = evento.titulo ?: "Sin título",
+                    text = evento.titulo ?: stringResource(id = R.string.unknown_event),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
@@ -352,7 +353,7 @@ fun EventoCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = "Fecha",
+                            contentDescription = stringResource(id = R.string.date),
                             tint = primaryColor,
                             modifier = Modifier.size(16.dp)
                         )
@@ -372,7 +373,7 @@ fun EventoCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Schedule,
-                            contentDescription = "Hora",
+                            contentDescription = stringResource(id = R.string.time),
                             tint = primaryColor,
                             modifier = Modifier.size(16.dp)
                         )
@@ -405,7 +406,7 @@ fun EventoCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Ubicación",
+                        contentDescription = stringResource(id = R.string.location),
                         tint = primaryColor,
                         modifier = Modifier.size(16.dp)
                     )
@@ -413,7 +414,7 @@ fun EventoCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     
                     Text(
-                        text = evento.ubicacion ?: "Sin ubicación",
+                        text = evento.ubicacion ?: stringResource(id = R.string.location),
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -430,9 +431,9 @@ fun EventoCard(
                 
                 Text(
                     text = if (evento.entradas.isNullOrEmpty()) {
-                        "No disponible"
+                        stringResource(id = R.string.not_available)
                     } else if (precioMinimo == 0.0 && precioMaximo == 0.0) {
-                        "Gratuito"
+                        stringResource(id = R.string.free)
                     } else if (precioMinimo == precioMaximo) {
                         "%.2f€".format(precioMinimo)
                     } else {
