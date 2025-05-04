@@ -1,6 +1,6 @@
 package com.example.app.api
 
-import com.example.app.model.UserInfo
+import com.example.app.model.OrganizadorUserInfo
 import com.google.gson.annotations.SerializedName
 
 data class OrganizadorDetalle(
@@ -10,7 +10,7 @@ data class OrganizadorDetalle(
     @SerializedName("direccion_fiscal") val direccionFiscal: String? = null,
     @SerializedName("cif") val cif: String? = null,
     @SerializedName("nombre_usuario") val nombreUsuario: String? = null,
-    @SerializedName("user") val user: com.example.app.model.UserInfo?,
+    @SerializedName("user") val user: OrganizadorUserInfo?,
     @SerializedName("avatar_url") val avatarUrl: String? = null,
     @SerializedName("is_favorite") val isFavorite: Boolean = false
 ) {

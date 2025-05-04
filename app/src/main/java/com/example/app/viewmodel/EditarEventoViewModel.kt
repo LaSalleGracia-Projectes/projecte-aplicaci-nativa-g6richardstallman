@@ -39,34 +39,35 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import com.example.app.model.Evento
 import com.example.app.model.TipoEntrada
-import com.example.app.model.TipoEntradaDetalle
 import com.example.app.util.Constants
 
 class EditarEventoViewModel : ViewModel() {
-    // ID del evento a editar
-    var eventoId by mutableStateOf<Int?>(null)
-    
     // Datos básicos del evento
     var nombreEvento by mutableStateOf("")
-    var descripcion by mutableStateOf("")
+    var descripcion by mutableStateOf<String?>(null)
     var fechaEvento by mutableStateOf("")
-    var hora by mutableStateOf("")
-    var ubicacion by mutableStateOf("")
-    var categoria by mutableStateOf("")
+    var hora by mutableStateOf<String?>(null)
+    var ubicacion by mutableStateOf<String?>(null)
+    var categoria by mutableStateOf<String?>(null)
     var esOnline by mutableStateOf(false)
     
     // URI de la imagen original y la que se toma con la cámara
     var imagen by mutableStateOf<Uri?>(null)
-    var imageUri by mutableStateOf<Uri?>(null)
+    var imagenCamara by mutableStateOf<Uri?>(null)
+    
+    // Imagen URL y URIs
+    var imagenUrl by mutableStateOf<String?>(null)
+    var imagenUri by mutableStateOf<Uri?>(null)
+    
+    // Id del evento en caso de edición
+    var eventoId by mutableStateOf<Int?>(null)
     
     // Datos del formulario
     var titulo by mutableStateOf("")
-    var imagenUri by mutableStateOf<Uri?>(null)
-    var imagenUrl by mutableStateOf<String?>(null)
     
     // Tipos de entrada
     var tiposEntrada by mutableStateOf<List<TipoEntradaRequest>>(listOf())
-    var tiposEntradaOriginales by mutableStateOf<List<TipoEntradaDetalle>>(listOf())
+    var tiposEntradaOriginales by mutableStateOf<List<TipoEntrada>>(listOf())
     
     // Estados de UI
     var isLoading by mutableStateOf(false)
@@ -128,20 +129,23 @@ class EditarEventoViewModel : ViewModel() {
                     val evento = response.body()?.evento
                     if (evento != null) {
                         Log.d(TAG, "Datos de evento recibidos exitosamente:")
-                        Log.d(TAG, "ID: ${ evento.idEvento}, Título: ${evento.titulo}")
+                        Log.d(TAG, "ID: ${evento.id}, Título: ${evento.titulo}")
                         Log.d(TAG, "Fecha: ${evento.fechaEvento}, Hora: ${evento.hora}")
                         Log.d(TAG, "Categoría: ${evento.categoria}, Online: ${evento.esOnline}")
                         
                         // Llenar los datos del formulario
-                        nombreEvento = evento.titulo
-                        titulo = evento.titulo
+                        nombreEvento = evento.titulo.orEmpty()
+                        titulo = evento.titulo.orEmpty()
                         descripcion = evento.descripcion
-                        fechaEvento = evento.fechaEvento
-                        hora = formatearHora(evento.hora)
+                        fechaEvento = evento.fechaEvento ?: ""
+                        hora = formatearHora(evento.hora ?: "")
                         ubicacion = evento.ubicacion
                         categoria = evento.categoria
                         esOnline = evento.esOnline
-                        imagenUrl = evento.imagenUrl ?: ""
+                        // Cargar imagen
+                        if (evento.imagen != null) {
+                            imagenUrl = Constants.STORAGE_URL + evento.imagen
+                        }
                         
                         // Cargar tipos de entrada
                         cargarTiposEntrada(id)
@@ -192,11 +196,11 @@ class EditarEventoViewModel : ViewModel() {
                     // Convertir a TipoEntradaRequest
                     tiposEntrada = tiposEntradaAPI.map { tipo ->
                         TipoEntradaRequest(
-                            nombre = tipo.nombre,
-                            precio = tipo.precio.toDoubleOrNull() ?: 0.0,
+                            nombre = tipo.nombre ?: "General",
+                            precio = tipo.getPrecioDouble(),
                             cantidadDisponible = tipo.cantidadDisponible,
                             descripcion = tipo.descripcion,
-                            esIlimitado = tipo.esIlimitado
+                            esIlimitado = tipo.esIlimitado ?: false
                         )
                     }
                     
@@ -333,7 +337,7 @@ class EditarEventoViewModel : ViewModel() {
             errores.add("El título es obligatorio")
         }
         
-        if (descripcion.isBlank()) {
+        if (descripcion.isNullOrBlank()) {
             errores.add("La descripción es obligatoria")
         }
         
@@ -359,22 +363,22 @@ class EditarEventoViewModel : ViewModel() {
             }
         }
         
-        if (hora.isBlank()) {
+        if (hora.isNullOrBlank()) {
             errores.add("La hora es obligatoria")
         } else {
             // Validar formato de hora HH:MM
             val horaRegex = "^([01]?[0-9]|2[0-3]):([0-5][0-9])$"
-            if (!hora.matches(Regex(horaRegex))) {
+            if (!hora.orEmpty().matches(Regex(horaRegex))) {
                 errores.add("Formato de hora incorrecto. Debe ser HH:MM (valor actual: '$hora')")
                 Log.e(TAG, "Error de validación: Formato de hora incorrecto: '$hora'. Debe coincidir con el patrón: $horaRegex")
             }
         }
         
-        if (ubicacion.isBlank()) {
+        if (ubicacion.isNullOrBlank()) {
             errores.add("La ubicación es obligatoria")
         }
         
-        if (categoria.isBlank()) {
+        if (categoria.isNullOrBlank()) {
             errores.add("La categoría es obligatoria")
         }
         
@@ -528,11 +532,11 @@ class EditarEventoViewModel : ViewModel() {
                 
                 // Crear las partes del formulario
                 val tituloBody = titulo.toRequestBody("text/plain".toMediaTypeOrNull())
-                val descripcionBody = descripcion.toRequestBody("text/plain".toMediaTypeOrNull())
+                val descripcionBody = descripcion.toRequestBodyOrDefault()
                 val fechaBody = fechaEvento.toRequestBody("text/plain".toMediaTypeOrNull())
-                val horaBody = hora.toRequestBody("text/plain".toMediaTypeOrNull())
-                val ubicacionBody = ubicacion.toRequestBody("text/plain".toMediaTypeOrNull())
-                val categoriaBody = categoria.toRequestBody("text/plain".toMediaTypeOrNull())
+                val horaBody = hora.toRequestBodyOrDefault()
+                val ubicacionBody = ubicacion.toRequestBodyOrDefault()
+                val categoriaBody = categoria.toRequestBodyOrDefault()
                 val esOnlineBody = (if (esOnline) "1" else "0").toRequestBody("text/plain".toMediaTypeOrNull())
                 
                 // Para eventos presenciales, enviamos todos los tipos de entrada
@@ -577,7 +581,7 @@ class EditarEventoViewModel : ViewModel() {
                         partesTiposEntradas.add(
                             MultipartBody.Part.createFormData(
                                 "tipos_entrada[$index][idTipoEntrada]",
-                                tiposEntradaOriginales[index].id.toString()
+                                tiposEntradaOriginales[index].getEffectiveId().toString()
                             )
                         )
                     }
@@ -632,11 +636,11 @@ class EditarEventoViewModel : ViewModel() {
                 // Crear objeto para la actualización
                 val eventoRequest = EventoRequest(
                     titulo = titulo,
-                    descripcion = descripcion,
+                    descripcion = descripcion?.toString() ?: "",
                     fecha = fechaEvento,
-                    hora = hora,
-                    ubicacion = ubicacion,
-                    categoria = categoria,
+                    hora = hora.orEmpty(),
+                    ubicacion = ubicacion.orEmpty(),
+                    categoria = categoria.orEmpty(),
                     esOnline = esOnline,
                     tiposEntrada = tiposEntradaFinal
                 )
@@ -712,9 +716,9 @@ class EditarEventoViewModel : ViewModel() {
             
             // Usar FileProvider en lugar de Uri.fromFile
             val authority = "${context.packageName}.provider"
-            imageUri = androidx.core.content.FileProvider.getUriForFile(context, authority, file)
+            imagenCamara = androidx.core.content.FileProvider.getUriForFile(context, authority, file)
             
-            return imageUri
+            return imagenCamara
         } catch (e: Exception) {
             Log.e(TAG, "Error al crear URI para imagen", e)
             return null
@@ -786,5 +790,43 @@ class EditarEventoViewModel : ViewModel() {
             Log.e(TAG, "Error al formatear hora: '$horaOriginal'", e)
             horaOriginal
         }
+    }
+
+    // Verifica donde se cargan los datos del evento y corrige las asignaciones
+    private fun cargarDatosEvento(evento: Evento) {
+        eventoId = evento.id
+        titulo = evento.titulo.orEmpty()
+        descripcion = evento.descripcion
+        fechaEvento = evento.fechaEvento ?: ""
+        hora = evento.hora
+        ubicacion = evento.ubicacion
+        categoria = evento.categoria
+        esOnline = evento.esOnline
+        
+        // Corregir acceso a la imagen - usar solo imagen en lugar de imagenUrl
+        if (evento.imagen != null) {
+            imagenUrl = Constants.STORAGE_URL + evento.imagen
+        }
+
+        // Cargar tipos de entrada
+        val tiposEntradaList = mutableListOf<TipoEntradaRequest>() 
+        evento.entradas?.forEach { tipoEntrada ->
+            tiposEntradaList.add(
+                TipoEntradaRequest(
+                    nombre = tipoEntrada.nombre ?: "",
+                    precio = tipoEntrada.precio?.toDoubleOrNull() ?: 0.0,
+                    cantidadDisponible = tipoEntrada.cantidadDisponible ?: 0,
+                    descripcion = tipoEntrada.descripcion ?: "",
+                    esIlimitado = tipoEntrada.esIlimitado ?: false
+                )
+            )
+        }
+        tiposEntrada = tiposEntradaList
+    }
+
+    // Verifica función que crea RequestBody
+    private fun String?.toRequestBodyOrDefault(default: String = ""): RequestBody {
+        val value = this ?: default
+        return value.toRequestBody("text/plain".toMediaTypeOrNull())
     }
 } 

@@ -20,13 +20,13 @@ data class OrganizadorEntity(
     val cif: String = "",
     
     @SerializedName("user")
-    val user: UserInfo? = null,
+    val user: OrganizadorUserInfo? = null,
     
     @SerializedName("avatar_url")
     val avatarUrl: String? = null
 )
 
-data class UserInfo(
+data class OrganizadorUserInfo(
     @SerializedName("id")
     val id: Int = 0,
     
@@ -47,7 +47,7 @@ data class Organizador(
     @SerializedName("direccion_fiscal") val direccionFiscal: String? = null,
     @SerializedName("cif") val cif: String? = null,
     @SerializedName("nombre_usuario") val nombreUsuario: String? = null,
-    @SerializedName("user") val user: UserInfo?,
+    @SerializedName("user") val user: OrganizadorUserInfo?,
     @SerializedName("avatar_url") val avatarUrl: String? = null,
     @SerializedName("is_favorite") val isFavorite: Boolean = false
 ) {

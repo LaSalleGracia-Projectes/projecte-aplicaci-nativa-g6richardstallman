@@ -70,6 +70,9 @@ interface ApiService {
     @GET("api/eventos/{id}")
     suspend fun getEventoById(@Path("id") id: String): Response<EventoDetailResponse>
     
+    @GET("api/eventos/{id}/detalle")
+    suspend fun getEventoDetalle(@Path("id") id: String): Response<EventoDetailResponse>
+    
     @GET("api/eventos/{id}/tipos-entrada")
     suspend fun getTiposEntrada(@Path("id") id: String): Response<TiposEntradaResponse>
     
@@ -79,13 +82,13 @@ interface ApiService {
     ): Response<FavoritosResponse>
     
     @POST("api/favoritos")
-    suspend fun addFavorito(
+    suspend fun agregarFavorito(
         @Header("Authorization") token: String,
         @Body request: FavoritoRequest
     ): Response<MessageResponse>
     
     @DELETE("api/favoritos/{idEvento}")
-    suspend fun removeFavorito(
+    suspend fun eliminarFavorito(
         @Header("Authorization") token: String,
         @Path("idEvento") idEvento: Int
     ): Response<MessageResponse>

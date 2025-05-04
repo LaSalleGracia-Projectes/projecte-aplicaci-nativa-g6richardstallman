@@ -9,9 +9,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.app.api.RetrofitClient
 import com.example.app.model.Evento
-import com.example.app.model.TipoEntradaDetalle
+import com.example.app.model.TipoEntrada
+import com.example.app.model.TiposEntradaResponse
 import com.example.app.model.CompraRequest
 import com.example.app.model.EntradaCompra
+import com.example.app.model.OrganizadorEvento
+import com.example.app.model.UserInfo
+import com.example.app.model.favoritos.FavoritoRequest
 import com.example.app.util.SessionManager
 import com.example.app.util.isValidEventoId
 import com.example.app.util.getEventoIdErrorMessage
@@ -21,46 +25,52 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.google.gson.Gson
 
 class EventoDetailViewModel : ViewModel() {
+    // API
+    private val apiService = RetrofitClient.apiService
+    
+    // Constante para logs
+    private val TAG = "EventoDetailVM"
+    
     // Evento
     var evento by mutableStateOf<Evento?>(null)
         private set
-    
-    // Tipos de entrada detallados
-    var tiposEntrada by mutableStateOf<List<TipoEntradaDetalle>>(emptyList())
+
+    // Lista de tipos de entrada
+    var tiposEntrada by mutableStateOf<List<TipoEntrada>>(emptyList())
         private set
-    
+
     // Cantidades seleccionadas por tipo de entrada
-    var cantidadesSeleccionadas by mutableStateOf<Map<Int, Int>>(emptyMap())
-        private set
-    
+    private var cantidadesSeleccionadas = mutableMapOf<Int, Int>()
+
     // UI
     var isLoading by mutableStateOf(true)
         private set
-    
+
     var errorMessage by mutableStateOf<String?>(null)
         private set
     var isError by mutableStateOf(false)
         private set
-    
+
     // Estados para el proceso de compra
     private val _showPaymentDialog = MutableStateFlow(false)
     val showPaymentDialog: StateFlow<Boolean> = _showPaymentDialog
-    
+
     private val _compraProcesando = MutableStateFlow(false)
     val compraProcesando: StateFlow<Boolean> = _compraProcesando
-    
+
     private val _compraExitosa = MutableStateFlow(false)
     val compraExitosa: StateFlow<Boolean> = _compraExitosa
-    
+
     private val _mensajeCompra = MutableStateFlow("")
     val mensajeCompra: StateFlow<String> = _mensajeCompra
-    
+
     // Estado para indicar si la funcionalidad de favoritos está habilitada (solo para participantes)
     var puedeMarcarFavorito by mutableStateOf(false)
         private set
-        
+
     private val _toggleFavoritoLoading = MutableStateFlow(false)
     val toggleFavoritoLoading: StateFlow<Boolean> = _toggleFavoritoLoading
 
@@ -68,392 +78,290 @@ class EventoDetailViewModel : ViewModel() {
         // Verificar si el usuario tiene rol de participante para habilitar favoritos
         checkRolUsuario()
     }
-    
+
     private fun checkRolUsuario() {
         val userRole = SessionManager.getUserRole()?.lowercase() ?: ""
         puedeMarcarFavorito = userRole == "participante" && SessionManager.isLoggedIn()
     }
-    
-    fun loadEvento(id: String) {
+
+    /**
+     * Carga los datos del evento usando la llamada a /api/eventos/{id}/detalle para obtener todos
+     * los datos necesarios en una única petición.
+     */
+    fun loadEvento(eventoId: String) {
+        // Restablecer estados
+        isLoading = true
+        isError = false
+        errorMessage = null
+
+        // Validar ID
+        if (!eventoId.isValidEventoId()) {
+            setError("ID de evento inválido")
+            return
+        }
+
         viewModelScope.launch {
             try {
-                isLoading = true
-                errorMessage = null
-                isError = false
-                
-                Log.d("EventoDetailViewModel", "Cargando evento con ID: '$id' (${id.javaClass.name})")
-                
-                // Usar la extensión para validar ID
-                if (!id.isValidEventoId()) {
-                    val errorMsg = id.getEventoIdErrorMessage()
-                    Log.e("EventoDetailViewModel", errorMsg)
-                    setError(errorMsg)
-                    return@launch
-                }
-                
-                // Convertir a entero de forma segura
-                val idNum = id.toValidEventoId()
-                if (idNum == null) {
-                    setError("Error al procesar el ID del evento")
-                    return@launch
-                }
-                
-                Log.d("EventoDetailViewModel", "ID validado correctamente: $idNum")
-                
-                // Realizar petición a la API
-                val response = withContext(Dispatchers.IO) {
-                    try {
-                        Log.d("EventoDetailViewModel", "Realizando petición API para ID: $id")
-                        RetrofitClient.apiService.getEventoById(id)
-                    } catch (e: Exception) {
-                        Log.e("EventoDetailViewModel", "Error en petición API", e)
-                        null
-                    }
-                }
-                
-                if (response == null) {
-                    Log.e("EventoDetailViewModel", "Respuesta nula de la API")
-                    setError("Error de conexión al servidor")
-                    return@launch
-                }
-                
-                Log.d("EventoDetailViewModel", "Código de respuesta API: ${response.code()}")
-                
-                if (response.isSuccessful && response.body() != null) {
-                    val eventoData = response.body()?.evento
+                // Hacer la solicitud a la API
+                Log.d(TAG, "⬇️ Obteniendo datos del evento con ID: $eventoId a través del endpoint de detalle")
+                val response = apiService.getEventoDetalle(eventoId)
+
+                if (response.isSuccessful) {
+                    val responseBody = response.body()
                     
-                    if (eventoData != null) {
-                        Log.d("EventoDetailViewModel", "Evento recibido - ID: ${eventoData.idEvento}, Título: ${eventoData.titulo}")
+                    if (responseBody != null && responseBody.status == "success") {
+                        // Obtener el evento detallado de la respuesta
+                        val eventoDetalle = responseBody.evento
                         
-                        // Verificar la validez del evento recibido usando getEventoId()
-                        val eventoId = eventoData.getEventoId()
-                        if (eventoId <= 0) {
-                            Log.e("EventoDetailViewModel", "Evento recibido con ID inválido: $eventoId")
-                            setError("El evento recibido tiene un ID inválido")
-                            return@launch
+                        // Convertir EventoDetalle a Evento
+                        val eventoConvertido = Evento(
+                            id = eventoDetalle.id,
+                            titulo = eventoDetalle.titulo,
+                            descripcion = eventoDetalle.descripcion,
+                            fechaEvento = eventoDetalle.fechaEvento,
+                            hora = eventoDetalle.hora,
+                            ubicacion = eventoDetalle.ubicacion,
+                            categoria = eventoDetalle.categoria,
+                            imagen = eventoDetalle.imagen,
+                            esOnline = eventoDetalle.esOnline,
+                            isFavorito = eventoDetalle.isFavorito
+                        )
+                        
+                        // Establecer el evento para la UI
+                        evento = eventoConvertido
+                        
+                        // Procesar tipos de entrada si existen
+                        eventoDetalle.tipos_entrada?.let { tiposEntradaLista ->
+                            if (tiposEntradaLista.isNotEmpty()) {
+                                this@EventoDetailViewModel.tiposEntrada = tiposEntradaLista
+                                Log.d(TAG, "🎟️ Tipos de entrada cargados: ${tiposEntradaLista.size}")
+                                
+                                // Inicializar cantidades seleccionadas
+                                cantidadesSeleccionadas.clear()
+                                tiposEntradaLista.forEach { tipo ->
+                                    val tipoId = tipo.id ?: tipo.idTipoEntrada ?: 0
+                                    cantidadesSeleccionadas[tipoId] = 0
+                                }
+                            }
                         }
                         
-                        // Asignar el evento y cargar más datos
-                        evento = eventoData
-                        Log.d("EventoDetailViewModel", "Evento cargado exitosamente")
-                        
-                        // Cargar tipos de entrada detallados
-                        loadTiposEntrada(id)
-                        
-                        Log.d("EventoDetailViewModel", "idEvento: ${eventoData.idEvento}")
-                        
-                        Log.d("EventoDetailViewModel", "Evento recibido: $eventoData")
+                        isLoading = false
                     } else {
-                        Log.e("EventoDetailViewModel", "Respuesta exitosa pero evento es null")
-                        setError("No se encontró la información del evento")
+                        setError("Datos del evento no disponibles o formato incorrecto")
                     }
                 } else {
-                    val error = response.errorBody()?.string() ?: "Error desconocido"
-                    val statusCode = response.code()
-                    Log.e("EventoDetailViewModel", "Error al cargar evento [Código: $statusCode]: $error")
-                    
-                    val mensajeError = when (statusCode) {
-                        404 -> "Evento no encontrado"
-                        401 -> "No tienes permiso para ver este evento"
-                        500 -> "Error en el servidor"
-                        else -> "No se pudo cargar el evento (Error $statusCode)"
-                    }
-                    
-                    setError(mensajeError)
+                    val errorBody = response.errorBody()?.string() ?: "Error desconocido"
+                    Log.e(TAG, "❌ Error al obtener evento: $errorBody")
+                    setError("Error al cargar el evento: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("EventoDetailViewModel", "Excepción al cargar evento", e)
-                setError("Error de conexión: ${e.localizedMessage ?: e.javaClass.simpleName}")
-            } finally {
-                isLoading = false
+                Log.e(TAG, "❌ Excepción al obtener evento: ${e.message}", e)
+                setError("Error de conexión: ${e.message}")
             }
         }
     }
-    
-    private fun loadTiposEntrada(id: String) {
-        viewModelScope.launch {
-            try {
-                Log.d("EventoDetailViewModel", "Cargando tipos de entrada para evento ID: $id")
-                
-                val response = withContext(Dispatchers.IO) {
-                    RetrofitClient.apiService.getTiposEntrada(id)
-                }
-                
-                if (response.isSuccessful && response.body() != null) {
-                    tiposEntrada = response.body()?.tiposEntrada ?: emptyList()
-                    Log.d("EventoDetailViewModel", "Tipos de entrada cargados exitosamente: ${tiposEntrada.size}")
-                    
-                    // Inicializar cantidades seleccionadas
-                    val cantidadesIniciales = tiposEntrada.associate { it.id to 0 }
-                    cantidadesSeleccionadas = cantidadesIniciales
-                } else {
-                    val error = response.errorBody()?.string() ?: "Error desconocido"
-                    Log.e("EventoDetailViewModel", "Error al cargar tipos de entrada: $error")
-                    // No establecemos error general para no interrumpir la visualización del evento
-                }
-            } catch (e: Exception) {
-                Log.e("EventoDetailViewModel", "Excepción al cargar tipos de entrada", e)
-                // No establecemos error general para no interrumpir la visualización del evento
-            }
-        }
-    }
-    
-    fun incrementarCantidad(tipoEntradaId: Int) {
+
+    /**
+     * Incrementa la cantidad de entradas seleccionadas
+     */
+    fun incrementarCantidad(tipoEntradaId: Int?) {
+        if (tipoEntradaId == null) return
+
         val cantidadActual = cantidadesSeleccionadas[tipoEntradaId] ?: 0
         val tipoEntrada = tiposEntrada.find { it.id == tipoEntradaId }
-        
-        // Comprobar si se puede incrementar (disponibilidad)
-        if (tipoEntrada != null) {
-            val disponibles = tipoEntrada.disponibilidad ?: 
-                (tipoEntrada.cantidadDisponible?.minus(tipoEntrada.entradasVendidas) ?: 0)
-            
-            if (tipoEntrada.esIlimitado || cantidadActual < disponibles) {
-                cantidadesSeleccionadas = cantidadesSeleccionadas.toMutableMap().apply {
-                    put(tipoEntradaId, cantidadActual + 1)
-                }
+
+        tipoEntrada?.let { tipo ->
+            val disponibles = when {
+                tipo.cantidadDisponible != null && tipo.entradasVendidas != null -> 
+                    tipo.cantidadDisponible - tipo.entradasVendidas
+                else -> 0
+            }
+
+            if (tipo.esIlimitado == true || cantidadActual < disponibles) {
+                cantidadesSeleccionadas[tipoEntradaId] = cantidadActual + 1
             }
         }
     }
-    
-    fun decrementarCantidad(tipoEntradaId: Int) {
+
+    /**
+     * Decrementa la cantidad de entradas seleccionadas
+     */
+    fun decrementarCantidad(tipoEntradaId: Int?) {
+        if (tipoEntradaId == null) return
+
         val cantidadActual = cantidadesSeleccionadas[tipoEntradaId] ?: 0
         if (cantidadActual > 0) {
-            cantidadesSeleccionadas = cantidadesSeleccionadas.toMutableMap().apply {
-                put(tipoEntradaId, cantidadActual - 1)
-            }
+            cantidadesSeleccionadas[tipoEntradaId] = cantidadActual - 1
         }
     }
-    
-    fun obtenerCantidad(tipoEntradaId: Int): Int {
+
+    /**
+     * Obtiene la cantidad de entradas seleccionadas
+     */
+    fun obtenerCantidad(tipoEntradaId: Int?): Int {
+        if (tipoEntradaId == null) return 0
         return cantidadesSeleccionadas[tipoEntradaId] ?: 0
     }
-    
+
+    /**
+     * Calcula el total de la compra
+     */
     fun calcularTotal(): Double {
         var total = 0.0
-        tiposEntrada.forEach { tipoEntrada ->
-            val cantidad = cantidadesSeleccionadas[tipoEntrada.id] ?: 0
-            if (cantidad > 0) {
-                val precio = tipoEntrada.precio.toDoubleOrNull() ?: 0.0
-                total += precio * cantidad
-            }
+
+        tiposEntrada.forEach { tipo ->
+            val cantidad = cantidadesSeleccionadas[tipo.id] ?: 0
+            val precio = tipo.precio?.toDoubleOrNull() ?: 0.0
+
+            total += precio * cantidad
         }
+
         return total
     }
-    
+
+    /**
+     * Verifica si hay entradas seleccionadas
+     */
     fun hayEntradasSeleccionadas(): Boolean {
         return cantidadesSeleccionadas.values.any { it > 0 }
     }
-    
+
+    /**
+     * Muestra el diálogo de pago
+     */
     fun mostrarDialogoPago() {
+        _mensajeCompra.value = ""
+        _compraExitosa.value = false
+        _compraProcesando.value = false
         _showPaymentDialog.value = true
     }
-    
+
+    /**
+     * Cierra el diálogo de pago
+     */
     fun cerrarDialogoPago() {
         _showPaymentDialog.value = false
+        if (_compraExitosa.value) {
+            evento?.id?.toString()?.let { loadEvento(it) }
+        }
     }
-    
+
+    /**
+     * Realiza la compra de entradas
+     */
     fun realizarCompra() {
         viewModelScope.launch {
             try {
                 _compraProcesando.value = true
-                
-                // Verificar y obtener token
+                _mensajeCompra.value = ""
+
                 val token = SessionManager.getToken()
-                Log.d("EventoDetailViewModel", "Token para compra: ${token?.take(10) ?: "NULL"}...")
-                
                 if (token.isNullOrBlank()) {
-                    Log.e("EventoDetailViewModel", "Error: No hay token disponible para la compra")
                     _mensajeCompra.value = "Debes iniciar sesión para comprar entradas"
                     _compraProcesando.value = false
                     return@launch
                 }
-                
-                // Crear solicitud de compra
-                val entradas = cantidadesSeleccionadas
-                    .filter { it.value > 0 }
-                    .map { 
-                        val tipoEntrada = tiposEntrada.find { tipo -> tipo.id == it.key }
-                        val precio = tipoEntrada?.precio?.toDoubleOrNull() ?: 0.0
-                        EntradaCompra(
-                            idTipoEntrada = it.key, 
-                            cantidad = it.value,
-                            precio = precio
-                        ) 
+
+                // Crear lista de entradas a comprar
+                val eventoId = evento?.id ?: 0
+                val entradas = mutableListOf<EntradaCompra>()
+
+                cantidadesSeleccionadas.forEach { (tipoEntradaId, cantidad) ->
+                    if (cantidad > 0) {
+                        val tipoEntrada = tiposEntrada.find { it.id == tipoEntradaId }
+                        tipoEntrada?.let {
+                            val precio = it.precio?.toDoubleOrNull() ?: 0.0
+                            entradas.add(EntradaCompra(tipoEntradaId, cantidad, precio))
+                        }
                     }
-                
+                }
+
                 if (entradas.isEmpty()) {
                     _mensajeCompra.value = "No has seleccionado ninguna entrada"
                     _compraProcesando.value = false
                     return@launch
                 }
-                
-                val eventoId = evento?.getEventoId()
-                if (eventoId == null || eventoId <= 0) {
-                    Log.e("EventoDetailViewModel", "Error: ID del evento es nulo (idEvento)")
-                    _mensajeCompra.value = "Error al identificar el evento"
-                    _compraProcesando.value = false
-                    return@launch
+
+                // Realizar compra
+                val compraRequest = CompraRequest(eventoId, entradas)
+                val response = withContext(Dispatchers.IO) {
+                    apiService.comprarEntradas("Bearer $token", compraRequest)
                 }
-                
-                val compraRequest = CompraRequest(
-                    idEvento = eventoId,
-                    entradas = entradas
-                )
-                
-                Log.d("EventoDetailViewModel", "Enviando solicitud de compra: $compraRequest")
-                
-                // Realizar petición
-                try {
-                    val response = withContext(Dispatchers.IO) {
-                        RetrofitClient.apiService.comprarEntradas("Bearer $token", compraRequest)
+
+                if (response.isSuccessful) {
+                    _compraExitosa.value = true
+                    _mensajeCompra.value = "¡Tu compra se realizó correctamente!"
+
+                    // Limpiar cantidades
+                    cantidadesSeleccionadas.clear()
+                    tiposEntrada.forEach { tipo ->
+                        cantidadesSeleccionadas[tipo.id ?: 0] = 0
                     }
-                    
-                    Log.d("EventoDetailViewModel", "Respuesta de compra: ${response.code()}")
-                    
-                    if (response.isSuccessful) {
-                        // Compra exitosa
-                        val compraResponse = response.body()
-                        Log.d("EventoDetailViewModel", "Compra exitosa: $compraResponse")
-                        
-                        _compraExitosa.value = true
-                        _mensajeCompra.value = "¡Compra realizada con éxito!"
-                        
-                        // Reiniciar cantidades
-                        cantidadesSeleccionadas = tiposEntrada.associate { it.id to 0 }
-                    } else {
-                        // Error en la compra
-                        val errorBody = response.errorBody()?.string()
-                        Log.e("EventoDetailViewModel", "Error en compra: $errorBody")
-                        
-                        // Intentar extraer mensaje específico del error
-                        try {
-                            val gson = com.google.gson.Gson()
-                            val type = object : com.google.gson.reflect.TypeToken<Map<String, String>>() {}.type
-                            val errorMap = gson.fromJson<Map<String, String>>(errorBody, type)
-                            Log.d("EventoDetailViewModel", "Error parseado: $errorMap")
-                            
-                            val errorMessage = errorMap["message"] ?: errorMap["error"]
-                            Log.d("EventoDetailViewModel", "Mensaje de error extraído: $errorMessage")
-                            
-                            if (errorMessage?.contains("perfil de participante") == true || 
-                                errorMessage?.contains("asociado a su cuenta") == true) {
-                                Log.e("EventoDetailViewModel", "Error de perfil de participante")
-                                _mensajeCompra.value = "Para realizar compras, complete su perfil de participante en la sección Mi Perfil"
-                                
-                                // Asegurarse de que el token sea válido
-                                if (SessionManager.hasValidToken()) {
-                                    Log.d("EventoDetailViewModel", "Token válido detectado, problema es solo de perfil")
-                                } else {
-                                    Log.e("EventoDetailViewModel", "Token inválido, renovando sesión")
-                                    SessionManager.clearSession()
-                                }
-                            } else if (!errorMessage.isNullOrBlank()) {
-                                _mensajeCompra.value = errorMessage
-                            } else {
-                                when (response.code()) {
-                                    401 -> {
-                                        _mensajeCompra.value = "Tu sesión ha expirado. Por favor, inicia sesión de nuevo."
-                                        // Limpiar el token y forzar nueva autenticación
-                                        SessionManager.clearSession()
-                                    }
-                                    404 -> _mensajeCompra.value = "Evento no encontrado. Por favor, refresca la página."
-                                    500 -> _mensajeCompra.value = "Error en el servidor. Inténtalo de nuevo más tarde."
-                                    else -> _mensajeCompra.value = "Error al realizar la compra: ${response.code()}"
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e("EventoDetailViewModel", "Error al parsear mensaje de error: ${e.message}")
-                            
-                            when (response.code()) {
-                                401 -> {
-                                    _mensajeCompra.value = "Tu sesión ha expirado. Por favor, inicia sesión de nuevo."
-                                    // Limpiar el token y forzar nueva autenticación
-                                    SessionManager.clearSession()
-                                }
-                                404 -> _mensajeCompra.value = "Evento no encontrado. Por favor, refresca la página."
-                                500 -> _mensajeCompra.value = "Error en el servidor. Inténtalo de nuevo más tarde."
-                                else -> _mensajeCompra.value = "Error al realizar la compra: ${response.code()}"
-                            }
-                        }
+                } else {
+                    val error = when (response.code()) {
+                        401 -> "Sesión expirada. Inicia sesión nuevamente."
+                        403 -> "No tienes permiso para realizar esta acción."
+                        404 -> "Evento o entradas no disponibles."
+                        else -> "Error al procesar la compra: ${response.message()}"
                     }
-                } catch (e: Exception) {
-                    Log.e("EventoDetailViewModel", "Excepción al realizar la compra: ${e.message}", e)
-                    _mensajeCompra.value = "Error de conexión: ${e.message}"
+                    _mensajeCompra.value = error
                 }
             } catch (e: Exception) {
-                Log.e("EventoDetailViewModel", "Excepción general en compra: ${e.message}", e)
-                _mensajeCompra.value = "Error inesperado: ${e.message}"
+                _mensajeCompra.value = "Error: ${e.message}"
             } finally {
                 _compraProcesando.value = false
             }
         }
     }
-    
+
+    /**
+     * Cambia el estado de favorito del evento
+     */
     fun toggleFavorito() {
+        if (!puedeMarcarFavorito || evento == null) return
+
+        val eventoIdNum = evento?.id ?: return
+
         viewModelScope.launch {
-            if (!puedeMarcarFavorito || evento == null) {
-                return@launch
-            }
-            
             try {
                 _toggleFavoritoLoading.value = true
-                
-                // Obtener token y validar
+
                 val token = SessionManager.getToken()
-                if (token.isNullOrEmpty()) {
+                if (token.isNullOrBlank()) {
                     return@launch
                 }
-                
-                val eventoId = evento?.getEventoId() ?: return@launch
-                
-                // Llamar a la API para cambiar estado de favorito
+
+                val nuevoEstado = !(evento?.isFavorito ?: false)
                 val response = withContext(Dispatchers.IO) {
                     try {
-                        RetrofitClient.apiService.checkFavorito(
-                            token = "Bearer $token",
-                            idEvento = eventoId
-                        )
+                        if (nuevoEstado) {
+                            val favoritoRequest = FavoritoRequest(eventoIdNum)
+                            apiService.agregarFavorito("Bearer $token", favoritoRequest)
+                        } else {
+                            apiService.eliminarFavorito("Bearer $token", eventoIdNum)
+                        }
                     } catch (e: Exception) {
-                        Log.e("EventoDetailViewModel", "Error al verificar favorito", e)
                         null
                     }
                 }
-                
+
                 if (response != null && response.isSuccessful) {
-                    val isFavorito = response.body()?.isFavorito ?: false
-                    
-                    // Si es favorito, eliminar de favoritos; si no, añadir a favoritos
-                    val toggleResponse = withContext(Dispatchers.IO) {
-                        if (isFavorito) {
-                            RetrofitClient.apiService.removeFavorito(
-                                token = "Bearer $token",
-                                idEvento = eventoId
-                            )
-                        } else {
-                            RetrofitClient.apiService.addFavorito(
-                                token = "Bearer $token",
-                                request = com.example.app.model.favoritos.FavoritoRequest(idEvento = eventoId)
-                            )
-                        }
-                    }
-                    
-                    // Actualizar el estado local del evento
-                    if (toggleResponse.isSuccessful) {
-                        evento = evento?.copy(isFavorito = !isFavorito)
-                        Log.d("EventoDetailViewModel", "Favorito actualizado correctamente: ${!isFavorito}")
-                    }
+                    evento = evento?.copy(isFavorito = nuevoEstado)
                 }
             } catch (e: Exception) {
-                Log.e("EventoDetailViewModel", "Error al cambiar estado de favorito", e)
+                // Error silencioso
             } finally {
                 _toggleFavoritoLoading.value = false
             }
         }
     }
-    
-    private fun setError(error: String) {
-        errorMessage = error
+
+    /**
+     * Establece un estado de error
+     */
+    private fun setError(message: String) {
+        isLoading = false
         isError = true
-        Log.e("EventoDetailViewModel", "Error establecido: $error")
+        errorMessage = message
     }
-} 
+}

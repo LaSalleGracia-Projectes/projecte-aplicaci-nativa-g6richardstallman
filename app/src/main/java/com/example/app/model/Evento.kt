@@ -4,23 +4,24 @@ import com.google.gson.annotations.SerializedName
 import android.util.Log
 
 data class Evento(
-    @SerializedName(value = "id", alternate = ["idEvento"]) val idEvento: Int? = null,
-    @SerializedName("nombreEvento") val titulo: String,
-    @SerializedName("descripcion") val descripcion: String,
-    @SerializedName("imagen") val imagen: String,
+    @SerializedName(value = "id", alternate = ["idEvento"]) val id: Int? = null,
+    @SerializedName("nombreEvento") val titulo: String? = null,
+    @SerializedName("descripcion") val descripcion: String? = null,
+    @SerializedName("imagen") val imagen: String? = null,
     @SerializedName("imagen_url") val imagenUrl: String? = null,
-    @SerializedName("fechaEvento") val fechaEvento: String,
-    @SerializedName("hora") val hora: String,
-    @SerializedName("ubicacion") val ubicacion: String,
-    @SerializedName("categoria") val categoria: String,
-    @SerializedName("lugar") val lugar: String,
+    @SerializedName("fechaEvento") val fechaEvento: String? = null,
+    @SerializedName("hora") val hora: String? = null,
+    @SerializedName("ubicacion") val ubicacion: String? = null,
+    @SerializedName("categoria") val categoria: String? = null,
+    @SerializedName("lugar") val lugar: String? = null,
     @SerializedName("precio") val precio: Double = 0.0,
-    @SerializedName("organizador") val organizador: OrganizadorEvento?,
+    @SerializedName("organizador") val organizador: OrganizadorEvento? = null,
     @SerializedName("isFavorito") val isFavorito: Boolean = false,
     @SerializedName("entradas") val entradas: List<TipoEntrada> = emptyList(),
+    @SerializedName("tipos_entrada") val tipos_entrada: List<TipoEntrada>? = null,
     @SerializedName("es_online") val esOnline: Boolean = false
 ) {
-    fun getEventoId(): Int = idEvento ?: -1
+    fun getEventoId(): Int = id ?: -1
 }
 
 data class OrganizadorEvento(
@@ -31,16 +32,6 @@ data class OrganizadorEvento(
     @SerializedName("cif") val cif: String? = null,
     @SerializedName("user") val user: com.example.app.model.UserInfo?,
     @SerializedName("avatar_url") val avatarUrl: String? = null
-)
-
-data class TipoEntrada(
-    @SerializedName("id") val id: Int,
-    @SerializedName("tipo") val nombre: String,
-    @SerializedName("precio") val precio: Double,
-    @SerializedName("cantidad_disponible") val cantidadDisponible: Int?,
-    @SerializedName("entradas_vendidas") val entradasVendidas: Int = 0,
-    @SerializedName("descripcion") val descripcion: String? = null,
-    @SerializedName("es_ilimitado") val esIlimitado: Boolean = false
 )
 
 fun Evento.getImageUrl(): String {

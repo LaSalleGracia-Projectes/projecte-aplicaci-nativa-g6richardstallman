@@ -306,7 +306,7 @@ fun MisEventosScreen(
                     ) {
                         items(eventos) { evento ->
                             // Agregar log especializado para el evento EVENTOSINFOTO
-                            if (evento.titulo.contains("EVENTOSINFOTO", ignoreCase = true)) {
+                            if (evento.titulo?.contains("EVENTOSINFOTO", ignoreCase = true) == true) {
                                 Log.d("MisEventosScreen", "Evento especial encontrado: '${evento.titulo}'")
                                 Log.d("MisEventosScreen", "Detalles de EVENTOSINFOTO - ID: ${evento.getEventoId()}, Categoría: ${evento.categoria}")
                             }
@@ -349,7 +349,7 @@ private fun editarEvento(evento: Evento, navController: NavController) {
     Log.d("EditEvento", "======== INICIANDO EDICIÓN DE EVENTO ========")
     Log.d("EditEvento", "ID del evento: $eventoId")
     Log.d("EditEvento", "Título: ${evento.titulo}")
-    Log.d("EditEvento", "ID original: ${evento.idEvento}, idEvento: ${evento.idEvento}")
+    Log.d("EditEvento", "ID original: ${evento.id}, idEvento: ${evento.id}")
     
     // Validar ID y navegar directamente, siguiendo el mismo patrón que funciona en detalle
     try {
@@ -429,7 +429,7 @@ fun EventoCardConAcciones(
                 ) {
                     // Categoría
                     Text(
-                        text = evento.categoria.uppercase(),
+                        text = evento.categoria?.uppercase().orEmpty(),
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Medium,
                             letterSpacing = 1.sp
@@ -441,7 +441,7 @@ fun EventoCardConAcciones(
                     
                     // Título del evento
                     Text(
-                        text = evento.titulo,
+                        text = evento.titulo.orEmpty(),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -466,7 +466,7 @@ fun EventoCardConAcciones(
                         Spacer(modifier = Modifier.width(4.dp))
                         
                         Text(
-                            text = formatDate(evento.fechaEvento),
+                            text = formatDate(evento.fechaEvento.orEmpty()),
                             style = MaterialTheme.typography.bodySmall,
                             color = textSecondaryColor
                         )
@@ -488,7 +488,7 @@ fun EventoCardConAcciones(
                         Spacer(modifier = Modifier.width(4.dp))
                         
                         Text(
-                            text = formatTime(evento.hora),
+                            text = formatTime(evento.hora ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                             color = textSecondaryColor
                         )
@@ -510,7 +510,7 @@ fun EventoCardConAcciones(
                         Spacer(modifier = Modifier.width(4.dp))
                         
                         Text(
-                            text = if (evento.esOnline) "Online" else evento.ubicacion,
+                            text = evento.ubicacion.orEmpty(),
                             style = MaterialTheme.typography.bodySmall,
                             color = textSecondaryColor
                         )

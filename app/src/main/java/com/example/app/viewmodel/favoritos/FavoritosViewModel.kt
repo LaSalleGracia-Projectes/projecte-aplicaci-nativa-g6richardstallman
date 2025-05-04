@@ -98,7 +98,9 @@ class FavoritosViewModel : ViewModel() {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    val errorResponse = if (errorBody != null) {
+                        Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    } else null
                     errorMessage = errorResponse?.message ?: "Error al cargar favoritos"
                     isError = true
                     Log.e("FavoritosViewModel", "Error al cargar favoritos: $errorMessage")
@@ -135,7 +137,9 @@ class FavoritosViewModel : ViewModel() {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    val errorResponse = if (errorBody != null) {
+                        Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    } else null
                     Log.e("FavoritosViewModel", "Error al cargar organizadores favoritos: ${errorResponse?.message}")
                     organizadoresFavoritos = emptyList()
                 }
@@ -170,7 +174,9 @@ class FavoritosViewModel : ViewModel() {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    val errorResponse = if (errorBody != null) {
+                        Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    } else null
                     errorMessage = errorResponse?.message ?: "Error desconocido"
                     isError = true
                     Log.e("FavoritosViewModel", "Error al verificar favorito: $errorMessage")
@@ -188,14 +194,16 @@ class FavoritosViewModel : ViewModel() {
             try {
                 val request = FavoritoRequest(eventoId)
                 Log.d("FavoritosViewModel", "Añadiendo evento a favoritos: $eventoId")
-                val response = RetrofitClient.apiService.addFavorito(token, request)
+                val response = RetrofitClient.apiService.agregarFavorito(token, request)
                 
                 if (response.isSuccessful) {
                     Log.d("FavoritosViewModel", "Evento añadido a favoritos correctamente")
                     loadFavoritos()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    val errorResponse = if (errorBody != null) {
+                        Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    } else null
                     errorMessage = errorResponse?.message ?: "Error al añadir a favoritos"
                     isError = true
                     Log.e("FavoritosViewModel", "Error al añadir a favoritos: $errorMessage")
@@ -212,14 +220,16 @@ class FavoritosViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 Log.d("FavoritosViewModel", "Eliminando evento de favoritos: $eventoId")
-                val response = RetrofitClient.apiService.removeFavorito(token, eventoId)
+                val response = RetrofitClient.apiService.eliminarFavorito(token, eventoId)
                 
                 if (response.isSuccessful) {
                     Log.d("FavoritosViewModel", "Evento eliminado de favoritos correctamente")
                     loadFavoritos()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    val errorResponse = Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    val errorResponse = if (errorBody != null) {
+                        Gson().fromJson(errorBody, ErrorResponse::class.java)
+                    } else null
                     errorMessage = errorResponse?.message ?: "Error al eliminar de favoritos"
                     isError = true
                     Log.e("FavoritosViewModel", "Error al eliminar de favoritos: $errorMessage")

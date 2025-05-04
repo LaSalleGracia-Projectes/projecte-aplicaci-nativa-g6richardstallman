@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import com.google.gson.Gson
+import com.example.app.model.OrganizadorUserInfo
 
 class OrganizadorDetailViewModel : ViewModel() {
     // Constante para logs

@@ -25,8 +25,8 @@ fun Evento.getImageUrl(): String {
     
     // Si no, construir la URL basada en el campo imagen
     val url = when {
-        imagen.startsWith("http") -> imagen
-        imagen.isNotEmpty() -> "${Constants.STORAGE_URL}${imagen}"
+        !imagen.isNullOrEmpty() && imagen.startsWith("http") -> imagen
+        !imagen.isNullOrEmpty() -> "${Constants.STORAGE_URL}${imagen}"
         else -> "${Constants.STORAGE_URL}${Constants.DEFAULT_EVENT_IMAGE}"
     }
     

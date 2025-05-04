@@ -528,7 +528,7 @@ fun EventoCard(
             ) {
                 // Categoría
                 Text(
-                    text = evento.categoria,
+                    text = evento.categoria.orEmpty(),
                     style = MaterialTheme.typography.labelSmall,
                     color = primaryColor,
                     fontWeight = FontWeight.Bold
@@ -536,7 +536,7 @@ fun EventoCard(
                 
                 // Título
                 Text(
-                    text = evento.titulo,
+                    text = evento.titulo.orEmpty(),
                     style = MaterialTheme.typography.titleMedium,
                     color = textPrimaryColor,
                     fontWeight = FontWeight.Bold,
@@ -548,7 +548,7 @@ fun EventoCard(
                 
                 // Fecha y hora
                 Text(
-                    text = "${formatDate(evento.fechaEvento)} · ${evento.hora}",
+                    text = "${formatDate(evento.fechaEvento.orEmpty())} · ${evento.hora.orEmpty()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = textSecondaryColor
                 )
@@ -557,7 +557,7 @@ fun EventoCard(
                 
                 // Ubicación
                 Text(
-                    text = evento.ubicacion,
+                    text = evento.ubicacion.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
                     color = textSecondaryColor,
                     maxLines = 1,
@@ -568,8 +568,8 @@ fun EventoCard(
                 
                 // Precio
                 val precios = evento.entradas?.map { it.precio } ?: emptyList()
-                val precioMinimo = precios.minOrNull() ?: 0.0
-                val precioMaximo = precios.maxOrNull() ?: 0.0
+                val precioMinimo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.minOrNull() ?: 0.0
+                val precioMaximo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.maxOrNull() ?: 0.0
                 
                 Text(
                     text = if (evento.entradas.isNullOrEmpty()) {

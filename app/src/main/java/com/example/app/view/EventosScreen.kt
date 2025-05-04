@@ -99,9 +99,9 @@ fun EventosScreen(
             eventos
         } else {
             eventos.filter { evento ->
-                evento.titulo.contains(searchText, ignoreCase = true) ||
-                evento.descripcion.contains(searchText, ignoreCase = true) ||
-                evento.categoria.contains(searchText, ignoreCase = true)
+                evento.titulo?.contains(searchText, ignoreCase = true) == true ||
+                evento.descripcion?.contains(searchText, ignoreCase = true) == true ||
+                evento.categoria?.contains(searchText, ignoreCase = true) == true
             }
         }
     }
@@ -315,7 +315,7 @@ fun EventoCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = evento.categoria,
+                        text = evento.categoria ?: "Sin categoría",
                         style = MaterialTheme.typography.labelMedium,
                         color = primaryColor,
                         fontWeight = FontWeight.Medium
@@ -326,7 +326,7 @@ fun EventoCard(
                 
                 // Título del evento
                 Text(
-                    text = evento.titulo,
+                    text = evento.titulo ?: "Sin título",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 2,
@@ -356,7 +356,7 @@ fun EventoCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         
                         Text(
-                            text = formatDate(evento.fechaEvento, true),
+                            text = formatDate(evento.fechaEvento ?: "", true),
                             style = MaterialTheme.typography.bodyMedium,
                             color = textSecondaryColor
                         )
@@ -376,13 +376,13 @@ fun EventoCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         
                         // Asegurar que la hora siempre tenga formato HH:MM
-                        val formattedHora = if (evento.hora.contains(":")) {
-                            val parts = evento.hora.split(":")
-                            val hours = parts[0].padStart(2, '0')
-                            val minutes = if (parts.size > 1) parts[1].padStart(2, '0') else "00"
+                        val formattedHora = if (evento.hora?.contains(":") == true) {
+                            val parts = evento.hora?.split(":")
+                            val hours = parts?.getOrNull(0)?.padStart(2, '0') ?: "00"
+                            val minutes = parts?.getOrNull(1)?.padStart(2, '0') ?: "00"
                             "$hours:$minutes"
                         } else {
-                            evento.hora.padStart(2, '0') + ":00"
+                            (evento.hora?.padStart(2, '0') ?: "00") + ":00"
                         }
                         
                         Text(
@@ -409,7 +409,7 @@ fun EventoCard(
                     Spacer(modifier = Modifier.width(4.dp))
                     
                     Text(
-                        text = evento.ubicacion,
+                        text = evento.ubicacion ?: "Sin ubicación",
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -421,8 +421,8 @@ fun EventoCard(
                 
                 // Precio
                 val precios = evento.entradas?.map { it.precio } ?: emptyList()
-                val precioMinimo = precios.minOrNull() ?: 0.0
-                val precioMaximo = precios.maxOrNull() ?: 0.0
+                val precioMinimo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.minOrNull() ?: 0.0
+                val precioMaximo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.maxOrNull() ?: 0.0
                 
                 Text(
                     text = if (evento.entradas.isNullOrEmpty()) {
