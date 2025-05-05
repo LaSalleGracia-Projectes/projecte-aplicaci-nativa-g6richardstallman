@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -91,7 +92,7 @@ fun RegisterScreen(
             // Título
             item {
                 Text(
-                    text = "Registro de Usuario",
+                    text = stringResource(id = R.string.register_user_title),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935) // Color rojo del logo
@@ -119,7 +120,7 @@ fun RegisterScreen(
                                 viewModel.isNameError = false
                             }
                         },
-                        label = { Text("Nombre") },
+                        label = { Text(stringResource(id = R.string.name)) },
                         isError = viewModel.isNameError,
                         supportingText = {
                             if (viewModel.isNameError) {
@@ -154,7 +155,7 @@ fun RegisterScreen(
                                 viewModel.isApellido1Error = false
                             }
                         },
-                        label = { Text("Primer Apellido") },
+                        label = { Text(stringResource(id = R.string.first_surname)) },
                         isError = viewModel.isApellido1Error,
                         supportingText = {
                             if (viewModel.isApellido1Error) {
@@ -189,11 +190,11 @@ fun RegisterScreen(
                                 viewModel.isApellido2Error = false
                             }
                         },
-                        label = { Text("Segundo Apellido") },
+                        label = { Text(stringResource(id = R.string.second_surname)) },
                         isError = !apellido2Valid,
                         supportingText = {
                             if (!apellido2Valid) {
-                                Text("Apellido inválido")
+                                Text(stringResource(id = R.string.surname) + " inválido")
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -221,7 +222,7 @@ fun RegisterScreen(
                                 viewModel.isEmailError = false
                             }
                         },
-                        label = { Text("Email") },
+                        label = { Text(stringResource(id = R.string.email)) },
                         isError = viewModel.isEmailError,
                         supportingText = {
                             if (viewModel.isEmailError) {
@@ -257,7 +258,7 @@ fun RegisterScreen(
                                 viewModel.isPasswordError = false
                             }
                         },
-                        label = { Text("Contraseña") },
+                        label = { Text(stringResource(id = R.string.password)) },
                         isError = viewModel.isPasswordError,
                         supportingText = {
                             if (viewModel.isPasswordError) {
@@ -280,7 +281,7 @@ fun RegisterScreen(
                                 IconButton(onClick = { showPasswordRequirements = !showPasswordRequirements }) {
                                     Icon(
                                         imageVector = Icons.Filled.Info,
-                                        contentDescription = "Requisitos de contraseña",
+                                        contentDescription = stringResource(id = R.string.show_password_requirements),
                                         tint = Color(0xFFE53935)
                                     )
                                 }
@@ -288,7 +289,7 @@ fun RegisterScreen(
                                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                     Icon(
                                         imageVector = if (passwordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                                        contentDescription = if (passwordVisible) stringResource(id = R.string.hide_password) else stringResource(id = R.string.show_password),
                                         tint = Color(0xFFE53935)
                                     )
                                 }
@@ -319,7 +320,7 @@ fun RegisterScreen(
                                     .padding(16.dp)
                             ) {
                                 Text(
-                                    text = "Requisitos de contraseña:",
+                                    text = stringResource(id = R.string.password_requirements_title),
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.Bold
                                     ),
@@ -327,35 +328,15 @@ fun RegisterScreen(
                                     modifier = Modifier.padding(bottom = 8.dp)
                                 )
                                 
-                                Text(
-                                    text = "• Al menos 8 caracteres",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.DarkGray
-                                )
+                                Text(text = stringResource(id = R.string.password_requirement_8_chars), style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                                 
-                                Text(
-                                    text = "• Al menos una letra mayúscula",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.DarkGray
-                                )
+                                Text(text = stringResource(id = R.string.password_requirement_upper), style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                                 
-                                Text(
-                                    text = "• Al menos una letra minúscula",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.DarkGray
-                                )
+                                Text(text = stringResource(id = R.string.password_requirement_lower), style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                                 
-                                Text(
-                                    text = "• Al menos un número",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.DarkGray
-                                )
+                                Text(text = stringResource(id = R.string.password_requirement_digit), style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                                 
-                                Text(
-                                    text = "• Al menos un carácter especial",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.DarkGray
-                                )
+                                Text(text = stringResource(id = R.string.password_requirement_special), style = MaterialTheme.typography.bodySmall, color = Color.DarkGray)
                             }
                         }
                     }
@@ -372,7 +353,7 @@ fun RegisterScreen(
                                 viewModel.isConfirmPasswordError = false
                             }
                         },
-                        label = { Text("Confirmar Contraseña") },
+                        label = { Text(stringResource(id = R.string.confirm_password)) },
                         isError = viewModel.isConfirmPasswordError,
                         supportingText = {
                             if (viewModel.isConfirmPasswordError) {
@@ -393,7 +374,7 @@ fun RegisterScreen(
                             IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                                 Icon(
                                     imageVector = if (confirmPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                    contentDescription = if (confirmPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                                    contentDescription = if (confirmPasswordVisible) stringResource(id = R.string.hide_password) else stringResource(id = R.string.show_password),
                                     tint = Color(0xFFE53935)
                                 )
                             }
@@ -417,7 +398,7 @@ fun RegisterScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Selecciona tu rol",
+                        text = stringResource(id = R.string.select_role),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -446,7 +427,7 @@ fun RegisterScreen(
                             )
                         ) {
                             Text(
-                                text = "Organizador",
+                                text = stringResource(id = R.string.role_organizer),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -471,7 +452,7 @@ fun RegisterScreen(
                             )
                         ) {
                             Text(
-                                text = "Participante",
+                                text = stringResource(id = R.string.role_participant),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -483,7 +464,7 @@ fun RegisterScreen(
                     // Mensaje de ayuda si los botones están deshabilitados
                     if (!buttonsEnabled) {
                         Text(
-                            text = "Completa todos los campos correctamente para continuar",
+                            text = stringResource(id = R.string.complete_all_fields),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                             textAlign = TextAlign.Center,
@@ -502,7 +483,7 @@ fun RegisterScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 ) {
                     Text(
-                        text = "¿Ya tienes cuenta? Inicia sesión",
+                        text = stringResource(id = R.string.already_have_account),
                         color = Color(0xFFE53935),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Medium

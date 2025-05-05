@@ -38,6 +38,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -60,8 +61,6 @@ import com.example.app.util.SessionManager
 import com.example.app.util.Constants
 import com.example.app.util.getImageUrl
 import com.example.app.routes.Routes
-import com.example.app.components.EventoCard
-import com.example.app.api.RetrofitClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +95,6 @@ fun EventosScreen(
     val focusManager = LocalFocusManager.current
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
 
     // Filtrar eventos basados en el texto de búsqueda
     val filteredEventos = remember(eventos, searchText) {
@@ -125,31 +123,13 @@ fun EventosScreen(
         }
     }
 
-    // Cargar precios cuando cambian los eventos
-    LaunchedEffect(eventos) {
-        eventos.forEach { evento ->
-            val id = evento.getEventoId().toLong()
-            if (id > 0 && !preciosEventos.containsKey(id)) {
-                coroutineScope.launch {
-                    try {
-                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
-                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
-                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
-                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
-                        preciosEventos = preciosEventos + (id to (min to max))
-                    } catch (_: Exception) {}
-                }
-            }
-        }
-    }
-
     Scaffold(
         // Barra superior
         topBar = {
             TopAppBar(
                 title = { 
                     Text(
-                        text = "EVENTOS",
+                        text = stringResource(id = R.string.events_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
@@ -201,7 +181,7 @@ fun EventosScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = errorMessage ?: "Error desconocido",
+                        text = errorMessage ?: stringResource(id = R.string.error_unknown),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Red,
                         textAlign = TextAlign.Center
@@ -231,7 +211,7 @@ fun EventosScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(8.dp),
-                                placeholder = { Text("Buscar eventos") },
+                                placeholder = { Text(stringResource(id = R.string.search_events)) },
                                 singleLine = true,
                                 trailingIcon = {
                                     if (searchText.isNotEmpty()) {
@@ -240,7 +220,7 @@ fun EventosScreen(
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.Close,
-                                                contentDescription = "Limpiar búsqueda",
+                                                contentDescription = stringResource(id = R.string.clear_search),
                                                 tint = Color(0xFFE53935) // Color rojo del logo
                                             )
                                         }
@@ -265,7 +245,6 @@ fun EventosScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(filteredEventos) { evento ->
-                            val precios = preciosEventos[evento.getEventoId().toLong()]
                             EventoCard(
                                 evento = evento,
                                 onClick = { onEventoClick(evento) },
@@ -273,13 +252,197 @@ fun EventosScreen(
                                 textPrimaryColor = textPrimaryColor,
                                 textSecondaryColor = textSecondaryColor,
                                 successColor = successColor,
-                                navController = navController,
-                                precioMin = precios?.first,
-                                precioMax = precios?.second
+                                navController = navController
                             )
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun EventoCard(
+    evento: Evento,
+    onClick: () -> Unit,
+    primaryColor: Color,
+    textPrimaryColor: Color,
+    textSecondaryColor: Color,
+    successColor: Color,
+    navController: NavController
+) {
+    // Usar la función de extensión para obtener la URL de la imagen
+    val imageUrl = evento.getImageUrl()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(12.dp),
+                spotColor = Color.Black.copy(alpha = 0.2f)
+            )
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Imagen del evento
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = stringResource(id = R.string.event_image),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(120.dp)
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+            )
+            
+            // Información del evento
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                // Categoría
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(primaryColor.copy(alpha = 0.1f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = evento.categoria ?: stringResource(id = R.string.event_category),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = primaryColor,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Título del evento
+                Text(
+                    text = evento.titulo ?: stringResource(id = R.string.unknown_event),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = textPrimaryColor
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Fecha y hora
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Fecha
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = stringResource(id = R.string.date),
+                            tint = primaryColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = formatDate(evento.fechaEvento ?: "", true),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textSecondaryColor
+                        )
+                    }
+                    
+                    // Hora
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = stringResource(id = R.string.time),
+                            tint = primaryColor,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        // Asegurar que la hora siempre tenga formato HH:MM
+                        val formattedHora = if (evento.hora?.contains(":") == true) {
+                            val parts = evento.hora?.split(":")
+                            val hours = parts?.getOrNull(0)?.padStart(2, '0') ?: "00"
+                            val minutes = parts?.getOrNull(1)?.padStart(2, '0') ?: "00"
+                            "$hours:$minutes"
+                        } else {
+                            (evento.hora?.padStart(2, '0') ?: "00") + ":00"
+                        }
+                        
+                        Text(
+                            text = formattedHora,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textSecondaryColor
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // Ubicación
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = stringResource(id = R.string.location),
+                        tint = primaryColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(4.dp))
+                    
+                    Text(
+                        text = evento.ubicacion ?: stringResource(id = R.string.location),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = textSecondaryColor
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Precio
+                val precios = evento.entradas?.map { it.precio } ?: emptyList()
+                val precioMinimo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.minOrNull() ?: 0.0
+                val precioMaximo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.maxOrNull() ?: 0.0
+                
+                Text(
+                    text = if (evento.entradas.isNullOrEmpty()) {
+                        stringResource(id = R.string.not_available)
+                    } else if (precioMinimo == 0.0 && precioMaximo == 0.0) {
+                        stringResource(id = R.string.free)
+                    } else if (precioMinimo == precioMaximo) {
+                        "%.2f€".format(precioMinimo)
+                    } else {
+                        "%.2f€ - %.2f€".format(precioMinimo, precioMaximo)
+                    },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = if (evento.entradas.isNullOrEmpty()) textSecondaryColor else if (precioMinimo == 0.0 && precioMaximo == 0.0) successColor else primaryColor
+                )
             }
         }
     }

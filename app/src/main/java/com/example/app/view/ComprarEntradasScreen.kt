@@ -16,12 +16,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.app.R
 import com.example.app.util.formatToCurrency
 import com.example.app.viewmodel.ComprarEntradasViewModel
 import androidx.compose.runtime.collectAsState
@@ -76,7 +78,7 @@ fun ComprarEntradasScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "COMPRAR ENTRADAS",
+                        text = stringResource(R.string.buy_tickets_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
@@ -89,7 +91,7 @@ fun ComprarEntradasScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
+                            contentDescription = stringResource(R.string.back),
                             tint = Color.White
                         )
                     }
@@ -130,7 +132,7 @@ fun ComprarEntradasScreen(
                             onClick = { navController.popBackStack() },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
                         ) {
-                            Text("Volver")
+                            Text(stringResource(R.string.back))
                         }
                     }
                 }
@@ -143,7 +145,7 @@ fun ComprarEntradasScreen(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "Selecciona tus entradas",
+                            text = stringResource(R.string.select_your_tickets),
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
@@ -184,7 +186,7 @@ fun ComprarEntradasScreen(
                                     // Contador de entradas
                                     val totalEntradas = tiposEntrada.sumOf { viewModel.obtenerCantidad(it.id) }
                                     Text(
-                                        text = "Entradas seleccionadas: $totalEntradas",
+                                        text = stringResource(R.string.selected_tickets, totalEntradas),
                                         style = MaterialTheme.typography.bodyLarge,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -198,7 +200,7 @@ fun ComprarEntradasScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Total",
+                                            text = stringResource(R.string.total),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -229,7 +231,7 @@ fun ComprarEntradasScreen(
                                 enabled = viewModel.hayEntradasSeleccionadas()
                             ) {
                                 Text(
-                                    text = "COMPRAR AHORA",
+                                    text = stringResource(R.string.buy_now),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = 1.sp
@@ -246,7 +248,7 @@ fun ComprarEntradasScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Selecciona al menos una entrada para continuar",
+                                    text = stringResource(R.string.select_at_least_one_ticket),
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.Gray,
                                     textAlign = TextAlign.Center
@@ -287,7 +289,7 @@ fun CompraEntradaTipoItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = tipoEntrada.nombre?.takeIf { it.isNotBlank() } ?: "Entrada General",
+                    text = tipoEntrada.nombre?.takeIf { it.isNotBlank() } ?: stringResource(R.string.general_ticket),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -318,9 +320,9 @@ fun CompraEntradaTipoItem(
             ) {
                 // Mostrar disponibilidad
                 val disponibilidad = when {
-                    tipoEntrada.esIlimitado == true -> "Entradas ilimitadas"
-                    tipoEntrada.cantidadDisponible != null -> "Disponibles: ${tipoEntrada.cantidadDisponible}"
-                    else -> "Disponibilidad no especificada"
+                    tipoEntrada.esIlimitado == true -> stringResource(R.string.unlimited_tickets)
+                    tipoEntrada.cantidadDisponible != null -> stringResource(R.string.available_tickets_count, tipoEntrada.cantidadDisponible ?: 0)
+                    else -> stringResource(R.string.availability_not_specified)
                 }
                 Text(
                     text = disponibilidad,
@@ -339,7 +341,7 @@ fun CompraEntradaTipoItem(
                     ) {
                         Icon(
                             Icons.Default.Remove,
-                            contentDescription = "Decrementar",
+                            contentDescription = stringResource(R.string.decrease),
                             tint = if (cantidad > 0) primaryColor else Color.Gray
                         )
                     }
@@ -359,7 +361,7 @@ fun CompraEntradaTipoItem(
                     ) {
                         Icon(
                             Icons.Default.Add,
-                            contentDescription = "Incrementar",
+                            contentDescription = stringResource(R.string.increase),
                             tint = primaryColor
                         )
                     }
@@ -383,7 +385,7 @@ fun CompraDialogoPago(
         onDismissRequest = { if (!enProceso) onDismiss() },
         title = {
             Text(
-                text = if (exito) "¡Compra Exitosa!" else "Confirmar Compra",
+                text = if (exito) stringResource(R.string.successful_purchase) else stringResource(R.string.confirm_purchase),
                 fontWeight = FontWeight.Bold,
                 color = if (exito) Color.Green else primaryColor
             )
@@ -398,14 +400,14 @@ fun CompraDialogoPago(
                         CircularProgressIndicator(color = primaryColor)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Procesando tu compra...",
+                            text = stringResource(R.string.processing_purchase),
                             textAlign = TextAlign.Center
                         )
                     }
                     exito -> {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
-                            contentDescription = "Compra exitosa",
+                            contentDescription = stringResource(R.string.successful_purchase),
                             tint = Color.Green,
                             modifier = Modifier.size(64.dp)
                         )
@@ -426,7 +428,7 @@ fun CompraDialogoPago(
                         }
 
                         Text(
-                            text = "Total a pagar: ${formatToCurrency(total)}",
+                            text = stringResource(R.string.total_to_pay, formatToCurrency(total)),
                             textAlign = TextAlign.Center
                         )
                     }
@@ -439,14 +441,14 @@ fun CompraDialogoPago(
                     onClick = { if (exito) onDismiss() else onConfirm() },
                     colors = ButtonDefaults.buttonColors(containerColor = primaryColor)
                 ) {
-                    Text(if (exito) "Cerrar" else "Confirmar")
+                    Text(if (exito) stringResource(R.string.close) else stringResource(R.string.confirm_button))
                 }
             }
         },
         dismissButton = {
             if (!enProceso && !exito) {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.cancel_button))
                 }
             }
         }

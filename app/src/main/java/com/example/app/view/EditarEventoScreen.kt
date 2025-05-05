@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import com.example.app.R
 import com.example.app.routes.BottomNavigationBar
 import com.example.app.util.SessionManager
 import com.example.app.viewmodel.EditarEventoViewModel
@@ -84,7 +86,7 @@ fun EditarEventoScreen(
     // Efecto para manejar la navegación después de actualizar el evento
     LaunchedEffect(isUpdateSuccessful) {
         if (isUpdateSuccessful) {
-            Toast.makeText(context, "Evento actualizado con éxito", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, context.getString(R.string.event_updated_successfully), Toast.LENGTH_LONG).show()
             navController.popBackStack()
             viewModel.resetUpdateState()
         }
@@ -248,18 +250,19 @@ fun EditarEventoScreen(
     }
     
     Scaffold(
+        containerColor = Color.White,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
-                        text = "EDITAR EVENTO",
+                        text = "Edit event",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
                             letterSpacing = 1.sp
                         ),
                         color = Color.White
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -277,9 +280,7 @@ fun EditarEventoScreen(
                 )
             )
         },
-        bottomBar = {
-            BottomNavigationBar(navController = navController)
-        }
+        bottomBar = { BottomNavigationBar(navController = navController) },
     ) { paddingValues ->
         if (viewModel.isLoading) {
             Box(
@@ -314,6 +315,7 @@ fun EditarEventoScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(Color.White)
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState()),
@@ -338,7 +340,7 @@ fun EditarEventoScreen(
                             modifier = Modifier.padding(16.dp)
                         ) {
                             Text(
-                                text = "Error al editar el evento:",
+                                text = stringResource(id = R.string.error_editing_event),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFFD32F2F)
@@ -357,7 +359,7 @@ fun EditarEventoScreen(
                 
                 // Sección de información básica
                 Text(
-                    text = "INFORMACIÓN BÁSICA",
+                    text = "INFORMATION",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -371,8 +373,8 @@ fun EditarEventoScreen(
                 OutlinedTextField(
                     value = viewModel.titulo,
                     onValueChange = { viewModel.updateTitulo(it) },
-                    label = { Text("Título del evento") },
-                    placeholder = { Text("Ej. Concierto de Rock") },
+                    label = { Text(stringResource(id = R.string.event_title_label)) },
+                    placeholder = { Text(stringResource(id = R.string.event_title_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -387,8 +389,8 @@ fun EditarEventoScreen(
                 OutlinedTextField(
                     value = viewModel.descripcion,
                     onValueChange = { viewModel.updateDescripcion(it) },
-                    label = { Text("Descripción") },
-                    placeholder = { Text("Describe tu evento") },
+                    label = { Text(stringResource(id = R.string.event_description_label)) },
+                    placeholder = { Text(stringResource(id = R.string.event_description_placeholder)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
@@ -406,8 +408,8 @@ fun EditarEventoScreen(
                 OutlinedTextField(
                     value = viewModel.fechaEvento,
                     onValueChange = { viewModel.updateFecha(it) },
-                    label = { Text("Fecha") },
-                    placeholder = { Text("YYYY-MM-DD") },
+                    label = { Text(stringResource(id = R.string.event_date_label)) },
+                    placeholder = { Text(stringResource(id = R.string.event_date_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
                     trailingIcon = {
@@ -432,8 +434,8 @@ fun EditarEventoScreen(
                 OutlinedTextField(
                     value = viewModel.hora,
                     onValueChange = { viewModel.updateHora(it) },
-                    label = { Text("Hora") },
-                    placeholder = { Text("HH:MM") },
+                    label = { Text(stringResource(id = R.string.event_time_label)) },
+                    placeholder = { Text(stringResource(id = R.string.event_time_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     readOnly = true,
                     trailingIcon = {
@@ -458,8 +460,8 @@ fun EditarEventoScreen(
                 OutlinedTextField(
                     value = viewModel.ubicacion,
                     onValueChange = { viewModel.updateUbicacion(it) },
-                    label = { Text("Ubicación") },
-                    placeholder = { Text("Ej. Estadio Municipal") },
+                    label = { Text(stringResource(id = R.string.event_location_label)) },
+                    placeholder = { Text(stringResource(id = R.string.event_location_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -479,8 +481,8 @@ fun EditarEventoScreen(
                     OutlinedTextField(
                         value = viewModel.categoria,
                         onValueChange = {},
-                        label = { Text("Categoría") },
-                        placeholder = { Text("Selecciona una categoría") },
+                        label = { Text(stringResource(id = R.string.event_category_label)) },
+                        placeholder = { Text(stringResource(id = R.string.event_category_placeholder)) },
                         readOnly = true,
                         trailingIcon = {
                             ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoria)
@@ -516,7 +518,7 @@ fun EditarEventoScreen(
                 
                 // Imagen del evento
                 Text(
-                    text = "IMAGEN DEL EVENTO",
+                    text = "IMAGE",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -527,7 +529,7 @@ fun EditarEventoScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Selecciona una imagen para tu evento (opcional)",
+                    text = stringResource(id = R.string.select_event_image_optional),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -568,7 +570,7 @@ fun EditarEventoScreen(
                             ) {
                                 Icon(
                                     Icons.Filled.Close,
-                                    contentDescription = "Eliminar imagen",
+                                    contentDescription = stringResource(id = R.string.change_image),
                                     tint = Color.White
                                 )
                             }
@@ -595,7 +597,7 @@ fun EditarEventoScreen(
                             ) {
                                 Icon(
                                     Icons.Filled.Edit,
-                                    contentDescription = "Cambiar imagen",
+                                    contentDescription = stringResource(id = R.string.change_image),
                                     tint = Color.White
                                 )
                             }
@@ -611,13 +613,13 @@ fun EditarEventoScreen(
                             ) {
                                 Icon(
                                     Icons.Filled.Image,
-                                    contentDescription = "Subir imagen",
+                                    contentDescription = stringResource(id = R.string.add_event_image),
                                     modifier = Modifier.size(48.dp),
                                     tint = Color.Gray
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Añadir imagen del evento",
+                                    text = stringResource(id = R.string.add_event_image_text),
                                     color = Color.Gray
                                 )
                             }
@@ -629,8 +631,8 @@ fun EditarEventoScreen(
                 if (showImagePickerDialog) {
                     AlertDialog(
                         onDismissRequest = { showImagePickerDialog = false },
-                        title = { Text("Seleccionar imagen") },
-                        text = { Text("¿Cómo deseas añadir la imagen?") },
+                        title = { Text(stringResource(id = R.string.select_image)) },
+                        text = { Text(stringResource(id = R.string.how_to_add_image)) },
                         confirmButton = {
                             Button(
                                 onClick = {
@@ -639,7 +641,7 @@ fun EditarEventoScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
                             ) {
-                                Text("Tomar foto")
+                                Text(stringResource(id = R.string.take_photo))
                             }
                         },
                         dismissButton = {
@@ -650,7 +652,7 @@ fun EditarEventoScreen(
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE53935))
                             ) {
-                                Text("Galería")
+                                Text(stringResource(id = R.string.gallery))
                             }
                         }
                     )
@@ -660,7 +662,7 @@ fun EditarEventoScreen(
                 
                 // Tipo de evento (online/presencial)
                 Text(
-                    text = "TIPO DE EVENTO",
+                    text = "EVENT TYPE",
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -675,7 +677,7 @@ fun EditarEventoScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Evento online",
+                        text = stringResource(id = R.string.event_online),
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.weight(1f)
                     )
@@ -693,7 +695,7 @@ fun EditarEventoScreen(
                 // Sección de tipos de entrada (solo visible si el evento no es online)
                 if (!viewModel.esOnline) {
                     Text(
-                        text = "TIPOS DE ENTRADA",
+                        text = "TICKET TYPES",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFFE53935)
@@ -704,7 +706,7 @@ fun EditarEventoScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "Edita o añade tipos de entrada para tu evento",
+                        text = stringResource(id = R.string.edit_or_add_ticket_types),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -732,7 +734,7 @@ fun EditarEventoScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(
-                                        text = "Tipo de entrada ${index + 1}",
+                                        text = stringResource(id = R.string.ticket_type, index + 1),
                                         style = MaterialTheme.typography.titleMedium.copy(
                                             fontWeight = FontWeight.Bold
                                         )
@@ -742,7 +744,7 @@ fun EditarEventoScreen(
                                         IconButton(onClick = { viewModel.removeTipoEntrada(index) }) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,
-                                                contentDescription = "Eliminar tipo de entrada",
+                                                contentDescription = stringResource(id = R.string.delete_ticket_type),
                                                 tint = Color(0xFFE53935)
                                             )
                                         }
@@ -759,7 +761,7 @@ fun EditarEventoScreen(
                                         updatedTipos[index] = tipoEntrada.copy(nombre = newValue)
                                         viewModel.tiposEntrada = updatedTipos
                                     },
-                                    label = { Text("Nombre") },
+                                    label = { Text(stringResource(id = R.string.ticket_type_name)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
@@ -779,7 +781,7 @@ fun EditarEventoScreen(
                                         updatedTipos[index] = tipoEntrada.copy(precio = precio)
                                         viewModel.tiposEntrada = updatedTipos
                                     },
-                                    label = { Text("Precio (€)") },
+                                    label = { Text(stringResource(id = R.string.ticket_type_price)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     shape = RoundedCornerShape(8.dp),
@@ -799,7 +801,7 @@ fun EditarEventoScreen(
                                         updatedTipos[index] = tipoEntrada.copy(descripcion = newValue)
                                         viewModel.tiposEntrada = updatedTipos
                                     },
-                                    label = { Text("Descripción (opcional)") },
+                                    label = { Text(stringResource(id = R.string.ticket_type_description)) },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
@@ -816,7 +818,7 @@ fun EditarEventoScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Entradas ilimitadas",
+                                        text = stringResource(id = R.string.unlimited_tickets),
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.weight(1f)
                                     )
@@ -847,7 +849,7 @@ fun EditarEventoScreen(
                                             updatedTipos[index] = tipoEntrada.copy(cantidadDisponible = cantidad)
                                             viewModel.tiposEntrada = updatedTipos
                                         },
-                                        label = { Text("Cantidad disponible") },
+                                        label = { Text(stringResource(id = R.string.available_quantity)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                         shape = RoundedCornerShape(8.dp),
@@ -874,11 +876,11 @@ fun EditarEventoScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Añadir tipo de entrada",
+                            contentDescription = stringResource(id = R.string.add_ticket_type),
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Añadir tipo de entrada")
+                        Text(stringResource(id = R.string.add_ticket_type))
                     }
                     
                     Spacer(modifier = Modifier.height(24.dp))
@@ -903,7 +905,7 @@ fun EditarEventoScreen(
                         )
                     } else {
                         Text(
-                            "GUARDAR CAMBIOS",
+                            "Save",
                             modifier = Modifier.padding(8.dp),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold

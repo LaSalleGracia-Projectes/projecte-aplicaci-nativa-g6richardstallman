@@ -24,7 +24,9 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.background
@@ -37,9 +39,11 @@ import androidx.compose.runtime.getValue
 fun OrganizadorScreen(
     viewModel: RegisterViewModel
 ) {
+    val context = LocalContext.current
+    
     // Definir el tipo de usuario
     LaunchedEffect(Unit) {
-        viewModel.role = "Organizador"
+        viewModel.role = context.getString(R.string.role_organizer)
     }
     
     // Pantalla principal
@@ -67,7 +71,7 @@ fun OrganizadorScreen(
                 
                 // Título de la pantalla
                 Text(
-                    text = "Datos de Organizador",
+                    text = stringResource(id = R.string.organizer_data_title),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -92,7 +96,7 @@ fun OrganizadorScreen(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = "Resumen de Registro",
+                            text = stringResource(id = R.string.register_summary),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -101,13 +105,13 @@ fun OrganizadorScreen(
                         )
                         
                         Text(
-                            text = "Nombre: ${viewModel.name} ${viewModel.apellido1} ${viewModel.apellido2}",
+                            text = "${stringResource(id = R.string.name)}: ${viewModel.name} ${viewModel.apellido1} ${viewModel.apellido2}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.DarkGray
                         )
                         
                         Text(
-                            text = "Email: ${viewModel.email}",
+                            text = "${stringResource(id = R.string.email)}: ${viewModel.email}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.DarkGray
                         )
@@ -118,7 +122,7 @@ fun OrganizadorScreen(
                 OutlinedTextField(
                     value = viewModel.nombreOrganizacion,
                     onValueChange = { viewModel.nombreOrganizacion = it },
-                    label = { Text("Nombre de la Organización") },
+                    label = { Text(stringResource(id = R.string.organization_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -141,7 +145,7 @@ fun OrganizadorScreen(
                             viewModel.telefonoContacto = it
                         }
                     },
-                    label = { Text("Teléfono de Contacto") },
+                    label = { Text(stringResource(id = R.string.contact_phone)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
@@ -170,15 +174,15 @@ fun OrganizadorScreen(
                             viewModel.onRegisterClick()
                         } else {
                             if (viewModel.nombreOrganizacion.isEmpty()) {
-                                viewModel.nombreOrganizacionErrorMessage = "El nombre de la organización es requerido"
+                                viewModel.nombreOrganizacionErrorMessage = context.getString(R.string.organization_name) + " es requerido"
                                 viewModel.isNombreOrganizacionError = true
                             }
                             
                             if (viewModel.telefonoContacto.isEmpty()) {
-                                viewModel.telefonoContactoErrorMessage = "El teléfono de contacto es requerido"
+                                viewModel.telefonoContactoErrorMessage = context.getString(R.string.contact_phone) + " es requerido"
                                 viewModel.isTelefonoContactoError = true
                             } else if (viewModel.telefonoContacto.length != 9) {
-                                viewModel.telefonoContactoErrorMessage = "El teléfono debe tener 9 dígitos"
+                                viewModel.telefonoContactoErrorMessage = context.getString(R.string.contact_phone) + ": " + context.getString(R.string.phone_invalid)
                                 viewModel.isTelefonoContactoError = true
                             }
                         }
@@ -192,7 +196,7 @@ fun OrganizadorScreen(
                     )
                 ) {
                     Text(
-                        text = "Completar Registro",
+                        text = stringResource(id = R.string.complete_registration),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -206,11 +210,11 @@ fun OrganizadorScreen(
             if (viewModel.isError) {
                 AlertDialog(
                     onDismissRequest = { viewModel.clearError() },
-                    title = { Text("Error") },
+                    title = { Text(stringResource(id = R.string.error)) },
                     text = { Text(errorMessage ?: "") },
                     confirmButton = {
                         TextButton(onClick = { viewModel.clearError() }) {
-                            Text("Aceptar")
+                            Text(stringResource(id = R.string.accept))
                         }
                     }
                 )
@@ -223,7 +227,7 @@ fun OrganizadorScreen(
                     onDismissRequest = { /* No hacer nada */ },
                     title = { 
                         Text(
-                            text = "Registro Exitoso",
+                            text = stringResource(id = R.string.registration_success_title),
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -232,14 +236,14 @@ fun OrganizadorScreen(
                     },
                     text = { 
                         Text(
-                            text = "Tu cuenta de organizador ha sido creada correctamente.",
+                            text = stringResource(id = R.string.organizer_registration_success),
                             style = MaterialTheme.typography.bodyMedium
                         ) 
                     },
                     confirmButton = {
                         TextButton(onClick = { /* Navegar al login */ }) {
                             Text(
-                                text = "Aceptar",
+                                text = stringResource(id = R.string.accept),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     fontWeight = FontWeight.Bold
                                 ),

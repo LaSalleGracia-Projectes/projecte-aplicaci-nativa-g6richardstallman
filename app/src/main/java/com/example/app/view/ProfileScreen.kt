@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -36,6 +37,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.app.R
 import com.example.app.routes.Routes
 import com.example.app.viewmodel.ProfileViewModel
 import kotlinx.coroutines.flow.collectLatest
@@ -47,8 +49,10 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import com.example.app.R
 import coil.compose.rememberAsyncImagePainter
+import androidx.compose.foundation.clickable
+import com.example.app.view.components.LanguageButton
+import androidx.compose.ui.platform.LocalContext
 
 // Colores consistentes con la app y la marca
 private val primaryColor = Color(0xFFE53935)  // Rojo principal del logo usado en otras pantallas
@@ -67,13 +71,23 @@ fun ProfileScreen(
     navController: NavController,
     viewModel: ProfileViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val profileData = viewModel.profileData
     val isEditing = viewModel.isEditing
     val isLoading = viewModel.isLoading
     val errorMessage = viewModel.errorMessage
     
+    // Estados para diálogos
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var passwordForDelete by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    
+    // Estados de éxito
     val successState = viewModel.isUpdateSuccessful.collectAsState(initial = false)
     val shouldNavigateToLogin = viewModel.shouldNavigateToLogin.collectAsState(initial = false)
+    val deleteSuccessState = viewModel.isDeleteAccountSuccessful.collectAsState(initial = false)
+    val showSuccessDialog = viewModel.showDeleteSuccessDialog.collectAsState(initial = false)
     
     // Verificación de token inmediata al inicio del composable
     val hasValidToken = remember { mutableStateOf(true) }
@@ -134,6 +148,9 @@ fun ProfileScreen(
         return
     }
     
+    // Obtener el mensaje de éxito fuera del LaunchedEffect
+    val successMessage = stringResource(R.string.profile_updated_successfully)
+    
     // Mostrar snackbar en caso de éxito
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -141,7 +158,7 @@ fun ProfileScreen(
     LaunchedEffect(successState.value) {
         if (successState.value) {
             showSnackbar = true
-            snackbarMessage = "Perfil actualizado correctamente"
+            snackbarMessage = successMessage
             viewModel.resetUpdateState()
         }
     }
@@ -169,7 +186,7 @@ fun ProfileScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "MI PERFIL",
+                        text = stringResource(id = R.string.my_profile),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 24.sp,
@@ -179,11 +196,16 @@ fun ProfileScreen(
                     )
                 },
                 actions = {
+                    // Botón de cambio de idioma
+                    LanguageButton(tint = primaryColor)
+                    // Espacio entre botones
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Botón de editar perfil
                     if (!isEditing && profileData != null) {
                         IconButton(onClick = { viewModel.startEditing() }) {
                             Icon(
                                 Icons.Default.Edit, 
-                                contentDescription = "Editar perfil",
+                                contentDescription = stringResource(id = R.string.edit_profile),
                                 tint = primaryColor
                             )
                         }
@@ -240,7 +262,7 @@ fun ProfileScreen(
                     )
                     
                     // Si es error de sesión expirada, mostrar botón para ir al login
-                    if (errorMessage.contains("sesión ha expirado", ignoreCase = true)) {
+                    if (errorMessage.contains(stringResource(id = R.string.session_expired), ignoreCase = true)) {
                         Button(
                             onClick = { viewModel.navigateToLogin() },
                             colors = ButtonDefaults.buttonColors(
@@ -248,7 +270,7 @@ fun ProfileScreen(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Iniciar sesión", color = Color.White)
+                            Text(stringResource(id = R.string.login), color = Color.White)
                         }
                     } else {
                         // Para otros errores, mostrar botón de reintentar
@@ -259,7 +281,7 @@ fun ProfileScreen(
                             ),
                             shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text("Reintentar", color = Color.White)
+                            Text(stringResource(id = R.string.retry), color = Color.White)
                         }
                     }
                 }
@@ -292,7 +314,7 @@ fun ProfileScreen(
                                 if (!avatarUrl.isNullOrEmpty()) {
                                     androidx.compose.foundation.Image(
                                         painter = rememberAsyncImagePainter(avatarUrl),
-                                        contentDescription = "Avatar del usuario",
+                                        contentDescription = stringResource(id = R.string.profile_picture),
                                         modifier = Modifier
                                             .size(120.dp)
                                             .padding(8.dp)
@@ -312,7 +334,7 @@ fun ProfileScreen(
                                     ) {
                                         Icon(
                                             Icons.Default.Star,
-                                            contentDescription = "Avatar por defecto",
+                                            contentDescription = stringResource(id = R.string.default_avatar),
                                             modifier = Modifier
                                                 .padding(24.dp)
                                                 .size(64.dp),
@@ -336,8 +358,8 @@ fun ProfileScreen(
                                 // Rol
                                 Text(
                                     text = when(profileData.role) {
-                                        "organizador" -> "Organizador"
-                                        "participante" -> "Participante"
+                                        "organizador" -> stringResource(id = R.string.organizer)
+                                        "participante" -> stringResource(id = R.string.participant)
                                         else -> profileData.role ?: ""
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
@@ -372,7 +394,7 @@ fun ProfileScreen(
                                     .padding(20.dp)
                             ) {
                                 Text(
-                                    text = "Información Personal",
+                                    text = stringResource(id = R.string.personal_data),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 18.sp
@@ -383,29 +405,296 @@ fun ProfileScreen(
                                 
                                 // Mostrar campos según el rol
                                 if (profileData.role == "participante") {
-                                    ProfileFieldRow("DNI", profileData.dni ?: "No especificado")
+                                    ProfileFieldRow(stringResource(id = R.string.dni_label), profileData.dni ?: stringResource(id = R.string.not_specified))
                                     HorizontalDivider(color = dividerColor, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
-                                    ProfileFieldRow("Teléfono", profileData.telefono ?: "No especificado")
+                                    ProfileFieldRow(stringResource(id = R.string.phone_label), profileData.telefono ?: stringResource(id = R.string.not_specified))
                                 } else if (profileData.role == "organizador") {
-                                    ProfileFieldRow("Nombre de la organización", profileData.nombreOrganizacion ?: "No especificado")
+                                    ProfileFieldRow(stringResource(id = R.string.organization_name), profileData.nombreOrganizacion ?: stringResource(id = R.string.not_specified))
                                     HorizontalDivider(color = dividerColor, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
-                                    ProfileFieldRow("Teléfono de contacto", profileData.telefonoContacto ?: "No especificado")
+                                    ProfileFieldRow(stringResource(id = R.string.contact_phone), profileData.telefonoContacto ?: stringResource(id = R.string.not_specified))
                                 }
                             }
                         }
                         
                         // Botones de acción
                         ActionsButtonsSection(navController, viewModel, profileData)
+                        
+                        // Tarjeta para cambio de contraseña
+                        ActionCard(
+                            title = stringResource(id = R.string.change_password_title),
+                            icon = Icons.Default.Lock,
+                            onClick = { 
+                                // Usar el estado local en lugar de una función no existente
+                                showChangePasswordDialog = true
+                            }
+                        )
+                        
+                        // Tarjeta para eliminar cuenta
+                        ActionCard(
+                            title = stringResource(id = R.string.delete_account_title),
+                            icon = Icons.Default.Delete,
+                            onClick = { 
+                                // Usar el estado local en lugar de una función no existente
+                                showDeleteDialog = true
+                            },
+                            color = Color.Red
+                        )
                     }
                 }
             } else {
                 Text(
-                    "No se pudo cargar la información del perfil",
+                    stringResource(id = R.string.profile_load_error),
                     modifier = Modifier
                         .align(Alignment.Center)
                         .padding(16.dp),
                     color = textPrimaryColor
                 )
+            }
+        }
+    }
+    
+    // Mostrar el diálogo de cambio de contraseña si es necesario
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            viewModel = viewModel,
+            onDismiss = { showChangePasswordDialog = false }
+        )
+    }
+    
+    // Diálogo de confirmación para eliminar cuenta
+    if (showDeleteDialog) {
+        val isLoading = viewModel.isLoading
+        
+        // Verificación de token antes de mostrar el diálogo
+        DisposableEffect(Unit) {
+            val token = com.example.app.util.SessionManager.getToken()
+            if (token.isNullOrEmpty()) {
+                // Si no hay token, cerrar el diálogo y navegar a login
+                showDeleteDialog = false
+                navController.navigate(com.example.app.routes.Routes.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+            
+            onDispose { }
+        }
+        
+        AlertDialog(
+            onDismissRequest = { 
+                if (!isLoading) {
+                    showDeleteDialog = false
+                    passwordForDelete = ""
+                    viewModel.clearError()
+                }
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = !isLoading,
+                dismissOnClickOutside = !isLoading
+            )
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = backgroundColor
+                ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Text(
+                        stringResource(id = R.string.delete_account_title),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 22.sp,
+                        color = Color.Red
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        stringResource(id = R.string.delete_account_warning),
+                        fontSize = 16.sp
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    if (isLoading) {
+                        // Contenido del diálogo cuando está cargando
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color = primaryColor
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            stringResource(id = R.string.deleting_account),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        // Si hay un mensaje de error, mostrarlo
+                        if (errorMessage != null) {
+                            Text(
+                                text = errorMessage,
+                                color = Color.Red,
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
+                        
+                        // Campo de contraseña
+                        OutlinedTextField(
+                            value = passwordForDelete,
+                            onValueChange = { passwordForDelete = it },
+                            label = { Text("Contraseña") },
+                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = primaryColor,
+                                focusedLabelColor = primaryColor
+                            )
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // Botones
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Botón Cancelar
+                            OutlinedButton(
+                                onClick = { 
+                                    showDeleteDialog = false
+                                    passwordForDelete = ""
+                                    viewModel.clearError()
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = primaryColor
+                                ),
+                                border = BorderStroke(1.dp, primaryColor),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(stringResource(id = R.string.cancel))
+                            }
+                            
+                            // Botón Confirmar
+                            Button(
+                                onClick = {
+                                    viewModel.deleteAccount(passwordForDelete)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = primaryColor,
+                                    contentColor = Color.White,
+                                    disabledContainerColor = primaryColor.copy(alpha = 0.5f)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                enabled = passwordForDelete.isNotBlank()
+                            ) {
+                                Text(stringResource(id = R.string.accept))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Diálogo de éxito cuando la cuenta se ha eliminado correctamente
+    if (showSuccessDialog.value) {
+        AlertDialog(
+            onDismissRequest = { },
+            properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = backgroundColor
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Default.CheckCircle,
+                        contentDescription = "Éxito",
+                        tint = Color.Green,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text(
+                        stringResource(id = R.string.account_deleted_successfully),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Text(
+                        stringResource(id = R.string.thank_you_for_using_app),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        color = textSecondaryColor
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    Button(
+                        onClick = {
+                            viewModel.confirmDeleteSuccess()
+                            navController.navigate(Routes.Login.route) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = primaryColor
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(stringResource(id = R.string.accept))
+                    }
+                }
             }
         }
     }
@@ -491,7 +780,11 @@ fun ProfileViewMode(
                     color = textPrimaryColor
                 )
                 Text(
-                    text = profileData.tipoUsuario ?: profileData.role ?: "",
+                    text = profileData.tipoUsuario ?: when(profileData.role) {
+                        "organizador" -> stringResource(id = R.string.organizer)
+                        "participante" -> stringResource(id = R.string.participant)
+                        else -> profileData.role ?: ""
+                    },
                     fontSize = 16.sp,
                     color = primaryColor
                 )
@@ -505,16 +798,16 @@ fun ProfileViewMode(
         )
         
         // Información personal
-        ProfileSection(title = "Información Personal") {
-            ProfileField("Email", profileData.email ?: "")
+        ProfileSection(stringResource(id = R.string.personal_data)) {
+            ProfileField(stringResource(id = R.string.email), profileData.email ?: "")
             
             // Mostrar campos según el rol
             if (profileData.role == "participante") {
-                ProfileField("DNI", profileData.dni ?: "")
-                ProfileField("Teléfono", profileData.telefono ?: "")
+                ProfileField(stringResource(id = R.string.dni_label), profileData.dni ?: stringResource(id = R.string.not_specified))
+                ProfileField(stringResource(id = R.string.phone_label), profileData.telefono ?: stringResource(id = R.string.not_specified))
             } else if (profileData.role == "organizador") {
-                ProfileField("Nombre de la organización", profileData.nombreOrganizacion ?: "")
-                ProfileField("Teléfono de contacto", profileData.telefonoContacto ?: "")
+                ProfileField(stringResource(id = R.string.organization_name), profileData.nombreOrganizacion ?: stringResource(id = R.string.not_specified))
+                ProfileField(stringResource(id = R.string.contact_phone), profileData.telefonoContacto ?: stringResource(id = R.string.not_specified))
             }
         }
         
@@ -536,12 +829,12 @@ fun ProfileViewMode(
             ) {
                 Icon(
                     Icons.Default.ReceiptLong,
-                    contentDescription = "Historial de compras",
+                    contentDescription = stringResource(id = R.string.purchase_history),
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "VER HISTORIAL DE COMPRAS",
+                    stringResource(id = R.string.view_purchase_history),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -579,12 +872,12 @@ fun ProfileViewMode(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.Logout,
-                contentDescription = "Cerrar sesión",
+                contentDescription = stringResource(id = R.string.logout),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "CERRAR SESIÓN",
+                stringResource(id = R.string.logout).uppercase(),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -622,12 +915,12 @@ fun ProfileViewMode(
         ) {
             Icon(
                 Icons.Filled.Delete,
-                contentDescription = "Eliminar cuenta",
+                contentDescription = stringResource(id = R.string.delete_account),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "ELIMINAR CUENTA",
+                stringResource(id = R.string.delete_account),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -690,13 +983,13 @@ fun ProfileViewMode(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Eliminar cuenta",
+                            contentDescription = stringResource(id = R.string.delete_account),
                             tint = primaryColor,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Eliminar cuenta",
+                            text = stringResource(id = R.string.delete_account),
                             fontWeight = FontWeight.Bold,
                             fontSize = 20.sp,
                             color = primaryColor
@@ -717,7 +1010,7 @@ fun ProfileViewMode(
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            "Eliminando cuenta...",
+                            stringResource(id = R.string.deleting_account),
                             fontSize = 14.sp,
                             color = textSecondaryColor,
                             textAlign = TextAlign.Center
@@ -725,7 +1018,7 @@ fun ProfileViewMode(
                     } else {
                         // Contenido del diálogo normal
                         Text(
-                            "Esta acción eliminará permanentemente tu cuenta y todos tus datos asociados:",
+                            stringResource(id = R.string.delete_account_warning),
                             textAlign = TextAlign.Center,
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
@@ -740,21 +1033,21 @@ fun ProfileViewMode(
                                 .fillMaxWidth()
                                 .padding(8.dp)
                         ) {
-                            BulletPoint("Tu perfil y datos personales")
-                            BulletPoint("Historial de compras y facturas")
+                            BulletPoint(stringResource(id = R.string.profile_and_personal_data))
+                            BulletPoint(stringResource(id = R.string.purchase_history_and_invoices))
                             if (profileData.role == "participante") {
-                                BulletPoint("Eventos favoritos")
-                                BulletPoint("Organizadores favoritos")
+                                BulletPoint(stringResource(id = R.string.favorite_events))
+                                BulletPoint(stringResource(id = R.string.favorite_organizers))
                             } else {
-                                BulletPoint("Eventos creados")
-                                BulletPoint("Tipos de entrada")
+                                BulletPoint(stringResource(id = R.string.created_events))
+                                BulletPoint(stringResource(id = R.string.entry_types))
                             }
                         }
                         
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         Text(
-                            "Esta acción no se puede deshacer.",
+                            stringResource(id = R.string.delete_account_warning_again),
                             textAlign = TextAlign.Center,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
@@ -767,11 +1060,9 @@ fun ProfileViewMode(
                         OutlinedTextField(
                             value = password,
                             onValueChange = { password = it },
-                            label = { Text("Contraseña actual") },
+                            label = { Text(stringResource(id = R.string.current_password)) },
                             visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password
-                            ),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),
                             trailingIcon = {
@@ -813,7 +1104,7 @@ fun ProfileViewMode(
                                 border = BorderStroke(1.dp, primaryColor),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
-                                Text("Cancelar")
+                                Text(stringResource(id = R.string.cancel))
                             }
                             
                             // Botón Confirmar
@@ -832,7 +1123,7 @@ fun ProfileViewMode(
                                 shape = RoundedCornerShape(8.dp),
                                 enabled = password.isNotBlank()
                             ) {
-                                Text("Confirmar")
+                                Text(stringResource(id = R.string.accept))
                             }
                         }
                     }
@@ -876,7 +1167,7 @@ fun ProfileViewMode(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        "Cuenta eliminada con éxito",
+                        stringResource(id = R.string.account_deleted_successfully),
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         textAlign = TextAlign.Center
@@ -885,7 +1176,7 @@ fun ProfileViewMode(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        "Gracias por haber usado nuestra aplicación",
+                        stringResource(id = R.string.thank_you_for_using_app),
                         fontSize = 14.sp,
                         textAlign = TextAlign.Center,
                         color = textSecondaryColor
@@ -908,7 +1199,7 @@ fun ProfileViewMode(
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Aceptar")
+                        Text(stringResource(id = R.string.accept))
                     }
                 }
             }
@@ -949,7 +1240,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Editar perfil",
+            text = stringResource(id = R.string.edit_profile),
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = primaryColor,
@@ -960,7 +1251,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
         OutlinedTextField(
             value = viewModel.nombre,
             onValueChange = { viewModel.nombre = it },
-            label = { Text("Nombre") },
+            label = { Text(stringResource(id = R.string.name)) },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = primaryColor,
@@ -973,7 +1264,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
         OutlinedTextField(
             value = viewModel.apellido1,
             onValueChange = { viewModel.apellido1 = it },
-            label = { Text("Primer apellido") },
+            label = { Text(stringResource(id = R.string.first_surname)) },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = primaryColor,
@@ -986,7 +1277,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
         OutlinedTextField(
             value = viewModel.apellido2,
             onValueChange = { viewModel.apellido2 = it },
-            label = { Text("Segundo apellido") },
+            label = { Text(stringResource(id = R.string.second_surname)) },
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = primaryColor,
@@ -1000,7 +1291,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
         OutlinedTextField(
             value = viewModel.email,
             onValueChange = { },
-            label = { Text("Email") },
+            label = { Text(stringResource(id = R.string.email)) },
             modifier = Modifier.fillMaxWidth(),
             enabled = false,
             colors = OutlinedTextFieldDefaults.colors(
@@ -1019,7 +1310,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
             OutlinedTextField(
                 value = viewModel.dni,
                 onValueChange = { viewModel.dni = it },
-                label = { Text("DNI") },
+                label = { Text(stringResource(id = R.string.dni_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = primaryColor,
@@ -1032,7 +1323,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
             OutlinedTextField(
                 value = viewModel.telefono,
                 onValueChange = { viewModel.telefono = it },
-                label = { Text("Teléfono") },
+                label = { Text(stringResource(id = R.string.phone_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = primaryColor,
@@ -1045,7 +1336,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
             OutlinedTextField(
                 value = viewModel.nombreOrganizacion,
                 onValueChange = { viewModel.nombreOrganizacion = it },
-                label = { Text("Nombre de la organización") },
+                label = { Text(stringResource(id = R.string.organization_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = primaryColor,
@@ -1058,7 +1349,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
             OutlinedTextField(
                 value = viewModel.telefonoContacto,
                 onValueChange = { viewModel.telefonoContacto = it },
-                label = { Text("Teléfono de contacto") },
+                label = { Text(stringResource(id = R.string.contact_phone)) },
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = primaryColor,
@@ -1087,7 +1378,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("Cancelar")
+                Text(stringResource(id = R.string.cancel))
             }
             
             Button(
@@ -1100,7 +1391,7 @@ fun ProfileEditMode(viewModel: ProfileViewModel) {
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Guardar")
+                Text(stringResource(id = R.string.save_changes))
             }
         }
     }
@@ -1156,7 +1447,7 @@ fun ProfileField(label: String, value: String) {
         )
         
         Text(
-            text = value.ifEmpty { "No especificado" },
+            text = value.ifEmpty { stringResource(id = R.string.not_specified) },
             fontSize = 16.sp,
             color = textPrimaryColor,
             fontWeight = FontWeight.Medium
@@ -1198,17 +1489,6 @@ fun ActionsButtonsSection(
     viewModel: ProfileViewModel,
     profileData: com.example.app.model.ProfileData
 ) {
-    // Variable para controlar diálogo de cambio de contraseña
-    var showChangePasswordDialog by remember { mutableStateOf(false) }
-    // Variables para el diálogo de eliminar cuenta
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-    
-    // Monitor del estado de eliminación exitosa
-    val deleteSuccessState = viewModel.isDeleteAccountSuccessful.collectAsState(initial = false)
-    val showSuccessDialog = viewModel.showDeleteSuccessDialog.collectAsState(initial = false)
-    
     // Botón de historial de compras (solo para participantes)
     if (profileData.role == "participante") {
         Button(
@@ -1227,12 +1507,12 @@ fun ActionsButtonsSection(
         ) {
             Icon(
                 Icons.Default.ReceiptLong,
-                contentDescription = "Historial de compras",
+                contentDescription = stringResource(id = R.string.purchase_history),
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                "VER HISTORIAL DE COMPRAS",
+                stringResource(id = R.string.view_purchase_history),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -1240,42 +1520,6 @@ fun ActionsButtonsSection(
         
         Spacer(modifier = Modifier.height(16.dp))
     }
-    
-    // Botón de cambiar contraseña
-    Button(
-        onClick = { showChangePasswordDialog = true },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = secondaryDarkRed, // Tono oscuro para botones importantes
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-    ) {
-        Icon(
-            Icons.Default.Edit,
-            contentDescription = "Cambiar contraseña",
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            "CAMBIAR CONTRASEÑA",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-    
-    // Mostrar el diálogo de cambio de contraseña si es necesario
-    if (showChangePasswordDialog) {
-        ChangePasswordDialog(
-            viewModel = viewModel,
-            onDismiss = { showChangePasswordDialog = false }
-        )
-    }
-    
-    Spacer(modifier = Modifier.height(16.dp))
     
     // Botón de cerrar sesión
     Button(
@@ -1292,356 +1536,19 @@ fun ActionsButtonsSection(
     ) {
         Icon(
             Icons.AutoMirrored.Filled.Logout,
-            contentDescription = "Cerrar sesión",
+            contentDescription = stringResource(id = R.string.logout),
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            "CERRAR SESIÓN",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-    }
-    
-    Spacer(modifier = Modifier.height(16.dp))
-    
-    // Botón de eliminar cuenta
-    Button(
-        onClick = { 
-            // Verificar token antes de mostrar el diálogo
-            val token = com.example.app.util.SessionManager.getToken()
-            if (token.isNullOrEmpty()) {
-                // Si no hay token, navegar directamente a login
-                navController.navigate(com.example.app.routes.Routes.Login.route) {
-                    popUpTo(0) { inclusive = true }
-                }
-            } else {
-                // Si hay token, mostrar el diálogo
-                showDeleteDialog = true
-                // Limpiar contraseña en caso de que haya quedado de algún intento anterior
-                password = ""
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFAD2A2A), // Rojo más oscuro para acciones peligrosas
-            contentColor = Color.White
-        ),
-        shape = RoundedCornerShape(12.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-    ) {
-        Icon(
-            Icons.Filled.Delete,
-            contentDescription = "Eliminar cuenta",
-            modifier = Modifier.size(20.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            "ELIMINAR CUENTA",
+            stringResource(id = R.string.logout).uppercase(),
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold
         )
     }
     
     // Espacio al final para evitar que el contenido quede pegado a la barra inferior
-    Spacer(modifier = Modifier.height(24.dp))
-    
-    // Diálogo de confirmación para eliminar cuenta
-    if (showDeleteDialog) {
-        val isLoading = viewModel.isLoading
-        val errorMessage = viewModel.errorMessage
-        
-        // Verificación de token antes de mostrar el diálogo
-        DisposableEffect(Unit) {
-            val token = com.example.app.util.SessionManager.getToken()
-            if (token.isNullOrEmpty()) {
-                // Si no hay token, cerrar el diálogo y navegar a login
-                showDeleteDialog = false
-                navController.navigate(com.example.app.routes.Routes.Login.route) {
-                    popUpTo(0) { inclusive = true }
-                }
-            }
-            
-            onDispose { }
-        }
-        
-        AlertDialog(
-            onDismissRequest = { 
-                if (!isLoading) {
-                    showDeleteDialog = false
-                    password = ""
-                    viewModel.clearError()
-                }
-            },
-            properties = DialogProperties(
-                dismissOnBackPress = !isLoading,
-                dismissOnClickOutside = !isLoading
-            )
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = backgroundColor
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 8.dp
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    // Título con icono
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Eliminar cuenta",
-                            tint = primaryColor,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Eliminar cuenta",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp,
-                            color = primaryColor
-                        )
-                    }
-                    
                     Spacer(modifier = Modifier.height(16.dp))
-                    
-                    if (isLoading) {
-                        // Contenido del diálogo cuando está cargando
-                        CircularProgressIndicator(
-                            color = primaryColor,
-                            modifier = Modifier
-                                .size(48.dp)
-                                .padding(8.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            "Eliminando cuenta...",
-                            fontSize = 14.sp,
-                            color = textSecondaryColor,
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        // Contenido del diálogo normal
-                        Text(
-                            "Esta acción eliminará permanentemente tu cuenta y todos tus datos asociados:",
-                            textAlign = TextAlign.Center,
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp,
-                            color = textPrimaryColor
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Lista de lo que se eliminará
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        ) {
-                            BulletPoint("Tu perfil y datos personales")
-                            BulletPoint("Historial de compras y facturas")
-                            if (profileData.role == "participante") {
-                                BulletPoint("Eventos favoritos")
-                                BulletPoint("Organizadores favoritos")
-                            } else {
-                                BulletPoint("Eventos creados")
-                                BulletPoint("Tipos de entrada")
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            "Esta acción no se puede deshacer.",
-                            textAlign = TextAlign.Center,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Red
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Si hay un mensaje de error, mostrarlo
-                        if (errorMessage != null) {
-                            Text(
-                                text = errorMessage,
-                                color = Color.Red,
-                                fontSize = 14.sp,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-                        
-                        // Campo de contraseña
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = { password = it },
-                            label = { Text("Contraseña actual") },
-                            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Password
-                            ),
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            trailingIcon = {
-                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                    Icon(
-                                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña"
-                                    )
-                                }
-                            },
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = primaryColor,
-                                unfocusedBorderColor = Color.Gray,
-                                focusedLabelColor = primaryColor,
-                                unfocusedLabelColor = Color.Gray
-                            )
-                        )
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Botones
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            // Botón Cancelar
-                            OutlinedButton(
-                                onClick = { 
-                                    showDeleteDialog = false
-                                    password = ""
-                                    viewModel.clearError()
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = primaryColor
-                                ),
-                                border = BorderStroke(1.dp, primaryColor),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text("Cancelar")
-                            }
-                            
-                            // Botón Confirmar
-                            Button(
-                                onClick = {
-                                    viewModel.deleteAccount(password)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = primaryColor,
-                                    contentColor = Color.White,
-                                    disabledContainerColor = primaryColor.copy(alpha = 0.5f)
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                enabled = password.isNotBlank()
-                            ) {
-                                Text("Confirmar")
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // Diálogo de éxito cuando la cuenta se ha eliminado correctamente
-    if (showSuccessDialog.value) {
-        AlertDialog(
-            onDismissRequest = { },
-            properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            )
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = backgroundColor
-                )
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        Icons.Default.CheckCircle,
-                        contentDescription = "Éxito",
-                        tint = Color.Green,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Text(
-                        text = "Cuenta eliminada con éxito",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = "Gracias por haber usado nuestra aplicación",
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                        color = textSecondaryColor
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    Button(
-                        onClick = {
-                            viewModel.confirmDeleteSuccess()
-                            navController.navigate(Routes.Login.route) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = primaryColor
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text("Aceptar")
-                    }
-                }
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -1700,7 +1607,7 @@ fun ChangePasswordDialog(
             ) {
                 // Título
                 Text(
-                    text = "Cambiar contraseña",
+                    text = stringResource(id = R.string.change_password_title),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp
@@ -1724,7 +1631,7 @@ fun ChangePasswordDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "Tu contraseña ha sido actualizada correctamente",
+                        text = stringResource(id = R.string.password_updated_successfully),
                         textAlign = TextAlign.Center,
                         color = textPrimaryColor
                     )
@@ -1733,7 +1640,7 @@ fun ChangePasswordDialog(
                     OutlinedTextField(
                         value = currentPassword,
                         onValueChange = { currentPassword = it },
-                        label = { Text("Contraseña actual") },
+                        label = { Text(stringResource(id = R.string.current_password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (currentPasswordVisible) 
                             VisualTransformation.None else PasswordVisualTransformation(),
@@ -1763,7 +1670,7 @@ fun ChangePasswordDialog(
                     OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it },
-                        label = { Text("Nueva contraseña") },
+                        label = { Text(stringResource(id = R.string.new_password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (newPasswordVisible) 
                             VisualTransformation.None else PasswordVisualTransformation(),
@@ -1793,7 +1700,7 @@ fun ChangePasswordDialog(
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
-                        label = { Text("Confirmar contraseña") },
+                        label = { Text(stringResource(id = R.string.confirm_password)) },
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation = if (confirmPasswordVisible) 
                             VisualTransformation.None else PasswordVisualTransformation(),
@@ -1841,7 +1748,7 @@ fun ChangePasswordDialog(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = "Cancelar",
+                                text = stringResource(id = R.string.cancel),
                                 color = primaryColor,
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp
@@ -1869,7 +1776,7 @@ fun ChangePasswordDialog(
                                       confirmPassword.isNotEmpty()
                         ) {
                             Text(
-                                text = "Cambiar",
+                                text = stringResource(id = R.string.change_password),
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp
                             )
@@ -1877,6 +1784,59 @@ fun ChangePasswordDialog(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Componente reutilizable para las tarjetas de acción en el perfil
+ */
+@Composable
+private fun ActionCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    color: Color = primaryColor
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp)
+            .clickable(onClick = onClick),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(containerColor = cardBackground),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = color,
+                modifier = Modifier.size(24.dp)
+            )
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = color
+            )
+            
+            Spacer(modifier = Modifier.weight(1f))
+            
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = color.copy(alpha = 0.6f)
+            )
         }
     }
 } 

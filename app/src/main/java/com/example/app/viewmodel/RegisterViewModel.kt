@@ -391,10 +391,20 @@ class RegisterViewModel : ViewModel() {
         Log.d("REGISTRO_DEBUG", mensaje)
     }
 
+    fun mapRoleToBackend(localizedRole: String): String {
+        return when (localizedRole.lowercase()) {
+            "organizer", "organizador", "organisateur", "organizzatore" -> "organizador"
+            "participant", "participante", "participe", "partecipante" -> "participante"
+            else -> localizedRole.lowercase()
+        }
+    }
+
     fun onRegisterClick() {
         viewModelScope.launch {
             try {
-                mostrarMensaje("Iniciando registro de ${role.lowercase()}...")
+                // Mapear el rol antes de cualquier validación o uso
+                role = mapRoleToBackend(role)
+                mostrarMensaje("Iniciando registro de $role...")
                 
                 isLoading = true
                 clearError()

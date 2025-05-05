@@ -2,6 +2,7 @@ package com.example.app.view.favoritos
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +22,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,18 +31,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.app.R
 import com.example.app.model.Evento
-import com.example.app.model.getOrganizadorAvatarUrl
+import com.example.app.model.Organizador
 import com.example.app.routes.BottomNavigationBar
 import com.example.app.routes.Routes
 import com.example.app.util.formatDate
 import com.example.app.util.getImageUrl
 import com.example.app.viewmodel.favoritos.FavoritosViewModel
-import kotlinx.coroutines.launch
+import com.example.app.view.EventoCard
 import com.example.app.view.organizador.OrganizadorCard
-import com.example.app.api.RetrofitClient
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +76,7 @@ fun FavoritosScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        text = "MIS FAVORITOS",
+                        text = stringResource(R.string.my_favorites),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
@@ -95,7 +100,7 @@ fun FavoritosScreen(
                         } else {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Recargar favoritos",
+                                contentDescription = stringResource(R.string.reload_favorites),
                                 tint = primaryColor
                             )
                         }
@@ -139,7 +144,7 @@ fun FavoritosScreen(
                     onClick = { selectedTabIndex = 0 },
                     text = {
                         Text(
-                            text = "Eventos",
+                            text = stringResource(R.string.events_tab),
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTabIndex == 0) primaryColor else textSecondaryColor
                         )
@@ -158,7 +163,7 @@ fun FavoritosScreen(
                     onClick = { selectedTabIndex = 1 },
                     text = {
                         Text(
-                            text = "Organizadores",
+                            text = stringResource(R.string.organizers_tab),
                             fontWeight = FontWeight.Bold,
                             color = if (selectedTabIndex == 1) primaryColor else textSecondaryColor
                         )
@@ -210,27 +215,6 @@ private fun EventosFavoritosContent(
     textSecondaryColor: Color,
     successColor: Color
 ) {
-    val scope = rememberCoroutineScope()
-    var preciosEventos by remember { mutableStateOf<Map<Long, Pair<Double?, Double?>>>(emptyMap()) }
-
-    // Cargar precios cuando cambian los favoritos
-    LaunchedEffect(favoritos) {
-        favoritos.forEach { evento ->
-            val id = evento.getEventoId().toLong()
-            if (id > 0 && !preciosEventos.containsKey(id)) {
-                scope.launch {
-                    try {
-                        val minResponse = RetrofitClient.apiService.getPrecioMinimoEvento(id)
-                        val maxResponse = RetrofitClient.apiService.getPrecioMaximoEvento(id)
-                        val min = minResponse.evento.precio_minimo?.toDoubleOrNull()
-                        val max = maxResponse.evento.precio_maximo?.toDoubleOrNull()
-                        preciosEventos = preciosEventos + (id to (min to max))
-                    } catch (_: Exception) {}
-                }
-            }
-        }
-    }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -257,7 +241,7 @@ private fun EventosFavoritosContent(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = errorMessage ?: "Error desconocido",
+                        text = errorMessage ?: stringResource(R.string.error_unknown),
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Red,
                         textAlign = TextAlign.Center
@@ -271,7 +255,7 @@ private fun EventosFavoritosContent(
                             containerColor = primaryColor
                         )
                     ) {
-                        Text("Reintentar")
+                        Text(stringResource(R.string.retry))
                     }
                 }
             }
@@ -293,7 +277,7 @@ private fun EventosFavoritosContent(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "No tienes eventos favoritos",
+                        text = stringResource(R.string.no_favorite_events),
                         style = MaterialTheme.typography.bodyLarge,
                         color = textSecondaryColor,
                         textAlign = TextAlign.Center
@@ -307,7 +291,7 @@ private fun EventosFavoritosContent(
                             containerColor = primaryColor
                         )
                     ) {
-                        Text("Explorar eventos")
+                        Text(stringResource(R.string.explore_events))
                     }
                 }
             }
@@ -319,18 +303,16 @@ private fun EventosFavoritosContent(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(favoritos) { evento ->
-                        val precios = preciosEventos[evento.getEventoId().toLong()]
                         EventoCard(
                             evento = evento,
-                            onClick = { 
+                            onClick = {
                                 navController.navigate(Routes.EventoDetalle.createRoute(evento.getEventoId().toString()))
                             },
                             primaryColor = primaryColor,
                             textPrimaryColor = textPrimaryColor,
                             textSecondaryColor = textSecondaryColor,
                             successColor = successColor,
-                            precioMin = precios?.first,
-                            precioMax = precios?.second
+                            navController = navController
                         )
                     }
                 }
@@ -390,7 +372,7 @@ private fun OrganizadoresFavoritosContent(
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Text(
-                        text = "No tienes organizadores favoritos",
+                        text = stringResource(R.string.no_favorite_organizers),
                         style = MaterialTheme.typography.bodyLarge,
                         color = textSecondaryColor,
                         textAlign = TextAlign.Center
@@ -399,7 +381,7 @@ private fun OrganizadoresFavoritosContent(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Text(
-                        text = "Explora los eventos para encontrar organizadores que te interesen y márcalos como favoritos.",
+                        text = stringResource(R.string.organizers_explanation),
                         style = MaterialTheme.typography.bodyMedium,
                         color = textSecondaryColor,
                         textAlign = TextAlign.Center
@@ -413,7 +395,7 @@ private fun OrganizadoresFavoritosContent(
                             containerColor = primaryColor
                         )
                     ) {
-                        Text("Explorar eventos")
+                        Text(stringResource(R.string.explore_events))
                     }
                 }
             }
@@ -432,7 +414,7 @@ private fun OrganizadoresFavoritosContent(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Organizadores favoritos: ${organizadores.size}",
+                            text = stringResource(R.string.organizers_favorites_count, organizadores.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = textSecondaryColor
                         )
@@ -442,7 +424,7 @@ private fun OrganizadoresFavoritosContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Recargar favoritos",
+                                contentDescription = stringResource(R.string.reload_favorites),
                                 tint = primaryColor
                             )
                         }
@@ -488,11 +470,11 @@ private fun OrganizadoresFavoritosContent(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Refrescar",
+                                    contentDescription = stringResource(R.string.refresh),
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = "Actualizar favoritos")
+                                Text(text = stringResource(R.string.update_favorites))
                             }
                             
                             Spacer(modifier = Modifier.height(60.dp))
@@ -512,8 +494,7 @@ fun EventoCard(
     textPrimaryColor: Color,
     textSecondaryColor: Color,
     successColor: Color,
-    precioMin: Double?,
-    precioMax: Double?
+    navController: NavHostController
 ) {
     Card(
         modifier = Modifier
@@ -540,7 +521,7 @@ fun EventoCard(
                     .data(imageUrl)
                     .crossfade(true)
                     .build(),
-                contentDescription = "Imagen del evento",
+                contentDescription = stringResource(R.string.event_image),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .width(120.dp)
@@ -594,20 +575,22 @@ fun EventoCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 // Precio
-                val precioTexto = if (precioMin == null && precioMax == null) {
-                    "No disponible"
-                } else if (precioMin == null && precioMax != null) {
-                    "%.2f€".format(precioMax)
-                } else if (precioMin != null && precioMax == null) {
-                    "%.2f€".format(precioMin)
-                } else {
-                    "%.2f€ - %.2f€".format(precioMin, precioMax)
-                }
+                val precios = evento.entradas?.map { it.precio } ?: emptyList()
+                val precioMinimo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.minOrNull() ?: 0.0
+                val precioMaximo = if (precios.isEmpty()) 0.0 else precios.mapNotNull { it?.toDoubleOrNull() ?: 0.0 }.maxOrNull() ?: 0.0
                 
                 Text(
-                    text = precioTexto,
+                    text = if (evento.entradas.isNullOrEmpty()) {
+                        stringResource(R.string.not_available)
+                    } else if (precioMinimo == 0.0 && precioMaximo == 0.0) {
+                        stringResource(R.string.free)
+                    } else if (precioMinimo == precioMaximo) {
+                        "%.2f€".format(precioMinimo)
+                    } else {
+                        "%.2f€ - %.2f€".format(precioMinimo, precioMaximo)
+                    },
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (precioMin == null && precioMax == null) textSecondaryColor else if (precioMin == 0.0 && precioMax == 0.0) successColor else primaryColor,
+                    color = if (evento.entradas.isNullOrEmpty()) textSecondaryColor else if (precioMinimo == 0.0 && precioMaximo == 0.0) successColor else primaryColor,
                     fontWeight = FontWeight.Bold
                 )
             }

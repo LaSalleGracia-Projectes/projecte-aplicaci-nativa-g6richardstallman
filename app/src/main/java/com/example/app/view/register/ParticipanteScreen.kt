@@ -17,7 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -41,6 +43,8 @@ import android.util.Log
 fun ParticipanteScreen(
     viewModel: RegisterViewModel
 ) {
+    val context = LocalContext.current
+    
     // Cargar datos de Google Auth si existen
     LaunchedEffect(Unit) {
         val sharedPrefs = com.example.app.MyApplication.appContext.getSharedPreferences(
@@ -62,7 +66,7 @@ fun ParticipanteScreen(
                 email = email,
                 name = nombre,
                 apellido1 = apellido1,
-                apellido2 = null,
+                apellido2 = "",
                 token = token
             )
             
@@ -132,7 +136,7 @@ fun ParticipanteScreen(
             // Título de la pantalla
             item {
                 androidx.compose.material3.Text(
-                    text = "Datos de Participante",
+                    text = stringResource(id = R.string.participant_data_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFE53935),
@@ -164,7 +168,7 @@ fun ParticipanteScreen(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                text = "Información básica",
+                                text = stringResource(id = R.string.basic_information),
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -173,7 +177,7 @@ fun ParticipanteScreen(
                             )
                             
                             Text(
-                                text = "Nombre: ${viewModel.name} ${viewModel.apellido1} ${viewModel.apellido2}",
+                                text = "${stringResource(id = R.string.name)}: ${viewModel.name} ${viewModel.apellido1} ${viewModel.apellido2}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.DarkGray
                             )
@@ -181,7 +185,7 @@ fun ParticipanteScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             
                             Text(
-                                text = "Email: ${viewModel.email}",
+                                text = "${stringResource(id = R.string.email)}: ${viewModel.email}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.DarkGray
                             )
@@ -197,141 +201,124 @@ fun ParticipanteScreen(
                             viewModel.dni = formattedInput
                             
                             if (formattedInput.isNotEmpty()) {
-                                viewModel.validateField("dni", formattedInput)
-                                Log.d("PARTICIPANTE_SCREEN", "DNI cambiado: $formattedInput, válido=${!viewModel.isDniError}")
+                                // Validar DNI
+                                val dniPattern = "[0-9]{8}[A-Z]".toRegex()
+                                val isValid = formattedInput.matches(dniPattern)
+                                
+                                if (!isValid) {
+                                    viewModel.dniErrorMessage = context.getString(R.string.dni_invalid)
+                                    viewModel.isDniError = true
+                                } else {
+                                    viewModel.isDniError = false
+                                    viewModel.dniErrorMessage = ""
+                                }
                             } else {
                                 viewModel.isDniError = false
+                                viewModel.dniErrorMessage = ""
                             }
                         },
-                        label = { Text("DNI (8 dígitos + letra)") },
-                        isError = !dniValid,
-                        supportingText = {
-                            if (!dniValid) {
-                                Text("DNI inválido. Formato: 12345678A")
-                            } else if (viewModel.dni.isNotEmpty()) {
-                                Text("El formato correcto es: 12345678A", color = Color.Gray)
-                            }
-                        },
+                        label = { Text(stringResource(id = R.string.dni_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                             imeAction = ImeAction.Next
                         ),
+                        isError = viewModel.isDniError,
+                        supportingText = {
+                            if (viewModel.isDniError) {
+                                Text(
+                                    text = viewModel.dniErrorMessage,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFE53935),
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
                             focusedLabelColor = Color(0xFFE53935),
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedLabelColor = Color.Gray,
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                            errorLabelColor = MaterialTheme.colorScheme.error
                         )
                     )
                     
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     
                     // Campo para teléfono
                     OutlinedTextField(
                         value = viewModel.telefono,
                         onValueChange = { input -> 
-                            // Filtrar solo dígitos y limitar a 9 caracteres
-                            val digitsOnly = input.filter { it.isDigit() }.take(9)
-                            viewModel.telefono = digitsOnly
+                            // Solo permitir dígitos y limitar a 9 caracteres
+                            val formattedInput = input.take(9).filter { it.isDigit() }
+                            viewModel.telefono = formattedInput
                             
-                            if (digitsOnly.isNotEmpty()) {
-                                viewModel.validateField("telefono", digitsOnly)
-                                Log.d("PARTICIPANTE_SCREEN", "Teléfono cambiado: $digitsOnly, válido=${!viewModel.isTelefonoError}")
+                            if (formattedInput.isNotEmpty()) {
+                                if (formattedInput.length != 9) {
+                                    viewModel.telefonoErrorMessage = context.getString(R.string.phone_digits_left, 9 - formattedInput.length)
+                                    viewModel.isTelefonoError = true
+                                } else {
+                                    viewModel.isTelefonoError = false
+                                    viewModel.telefonoErrorMessage = ""
+                                }
                             } else {
                                 viewModel.isTelefonoError = false
+                                viewModel.telefonoErrorMessage = ""
                             }
                         },
-                        label = { Text("Teléfono (9 dígitos)") },
-                        isError = !telefonoValid,
-                        supportingText = {
-                            if (!telefonoValid) {
-                                Text("Debe contener 9 dígitos")
-                            } else {
-                                val digitsLeft = 9 - viewModel.telefono.length
-                                if (digitsLeft > 0) {
-                                    Text("Faltan $digitsLeft dígitos", color = Color.Gray)
-                                }
-                            }
-                        },
+                        label = { Text(stringResource(id = R.string.phone_label)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Phone,
                             imeAction = ImeAction.Done
                         ),
+                        isError = viewModel.isTelefonoError,
+                        supportingText = {
+                            if (viewModel.isTelefonoError) {
+                                Text(
+                                    text = viewModel.telefonoErrorMessage,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFE53935),
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
                             focusedLabelColor = Color(0xFFE53935),
-                            unfocusedLabelColor = Color.Gray
+                            unfocusedLabelColor = Color.Gray,
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                            errorLabelColor = MaterialTheme.colorScheme.error
                         )
                     )
-                }
-            }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
 
             // Botón para completar registro
-            item {
                 Button(
                     onClick = {
-                        // Asegurarse de que la validación sea correcta
-                        if (allFieldsFilled && allFieldsValid) {
-                            Log.d("PARTICIPANTE_SCREEN", "==== INICIANDO REGISTRO ====")
-                            Log.d("PARTICIPANTE_SCREEN", "DNI: ${viewModel.dni}")
-                            Log.d("PARTICIPANTE_SCREEN", "Teléfono: ${viewModel.telefono}")
-                            Log.d("PARTICIPANTE_SCREEN", "isFromGoogleAuth: ${viewModel.isFromGoogleAuth}")
-                            
-                            viewModel.mostrarMensaje("VALIDACIÓN EXITOSA EN PARTICIPANTE SCREEN")
-                            viewModel.mostrarMensaje("DNI: ${viewModel.dni}")
-                            viewModel.mostrarMensaje("Teléfono: ${viewModel.telefono}")
-                            
-                            // Llamar a registerParticipante que ya maneja el rol
-                            viewModel.registerParticipante()
-                        } else {
-                            Log.e("PARTICIPANTE_SCREEN", "==== VALIDACIÓN FALLIDA ====")
-                            Log.e("PARTICIPANTE_SCREEN", "Campos llenos: $allFieldsFilled, Campos válidos: $allFieldsValid")
-                            Log.e("PARTICIPANTE_SCREEN", "DNI error: ${viewModel.isDniError}, Teléfono error: ${viewModel.isTelefonoError}")
-                            
-                            viewModel.mostrarMensaje("VALIDACIÓN FALLIDA EN PARTICIPANTE SCREEN")
-                            if (!allFieldsFilled) {
-                                viewModel.mostrarMensaje("Faltan campos: DNI=${viewModel.dni.isEmpty()}, Teléfono=${viewModel.telefono.isEmpty()}")
-                            }
-                            if (!allFieldsValid) {
-                                viewModel.mostrarMensaje("Campos inválidos: DNI=${viewModel.isDniError}, Teléfono=${viewModel.isTelefonoError}")
-                            }
-                            viewModel.setError("Por favor, completa todos los campos correctamente")
+                            if (buttonEnabled) {
+                                viewModel.onRegisterClick()
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
-                        .padding(vertical = 4.dp),
+                            .height(48.dp),
                     enabled = buttonEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFE53935),
-                        disabledContainerColor = Color.LightGray
+                            containerColor = Color(0xFF333333),
+                            disabledContainerColor = Color.Gray
                     )
                 ) {
                     Text(
-                        text = "Completar Registro",
+                            text = stringResource(id = R.string.complete_registration),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
                         color = Color.White
                     )
                 }
-                
-                // Mensaje de ayuda
-                if (!buttonEnabled) {
-                    Text(
-                        text = "Completa todos los campos correctamente para continuar",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
                 }
             }
         }
@@ -348,7 +335,7 @@ fun ParticipanteScreen(
             },
             title = { 
                 androidx.compose.material3.Text(
-                    text = "Error",
+                    text = stringResource(id = R.string.error),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFFE53935)
@@ -366,7 +353,7 @@ fun ParticipanteScreen(
                     Log.d("PARTICIPANTE_SCREEN", "Error confirmado por usuario")
                 }) {
                     androidx.compose.material3.Text(
-                        text = "Aceptar",
+                        text = stringResource(id = R.string.accept),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFFE53935)
@@ -386,7 +373,7 @@ fun ParticipanteScreen(
             onDismissRequest = { /* No hacer nada, la navegación se maneja en AppNavHost */ },
             title = { 
                 Text(
-                    text = "¡Registro Exitoso!",
+                    text = stringResource(id = R.string.registration_success_title),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF4CAF50)
@@ -395,7 +382,7 @@ fun ParticipanteScreen(
             },
             text = { 
                 Text(
-                    text = "Tu cuenta ha sido creada correctamente. Serás redirigido a la pantalla de inicio de sesión.",
+                    text = stringResource(id = R.string.participant_registration_success),
                     style = MaterialTheme.typography.bodyMedium
                 ) 
             },
@@ -406,7 +393,7 @@ fun ParticipanteScreen(
                     Log.d("PARTICIPANTE_SCREEN", "Confirmado diálogo de éxito")
                 }) {
                     Text(
-                        text = "Hecho",
+                        text = stringResource(id = R.string.done),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF4CAF50)

@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.example.app.R
 
 class HistorialComprasViewModel(
     private val application: android.app.Application
@@ -65,7 +66,7 @@ class HistorialComprasViewModel(
                 
                 if (token.isNullOrEmpty()) {
                     Log.e(TAG, "Error: No hay token disponible")
-                    setError("No se ha iniciado sesión")
+                    setError(application.getString(R.string.no_session_started))
                     _shouldNavigateToLogin.value = true
                     return@launch
                 }
@@ -82,7 +83,7 @@ class HistorialComprasViewModel(
                 
                 // Procesar la respuesta
                 if (response == null) {
-                    setError("Error de conexión al servidor")
+                    setError(application.getString(R.string.server_connection_error))
                     return@launch
                 }
                 
@@ -95,7 +96,7 @@ class HistorialComprasViewModel(
                         Log.d(TAG, "Compras cargadas: ${_compras.value.size}")
                     } else {
                         Log.e(TAG, "Respuesta vacía o sin datos")
-                        setError("No se pudieron obtener las compras")
+                        setError(application.getString(R.string.could_not_get_purchases))
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
@@ -103,18 +104,18 @@ class HistorialComprasViewModel(
                     
                     when (response.code()) {
                         401 -> {
-                            setError("Tu sesión ha expirado. Por favor, inicia sesión nuevamente")
+                            setError(application.getString(R.string.session_expired))
                             _shouldNavigateToLogin.value = true
                         }
-                        403 -> setError("No tienes permiso para acceder a esta información")
-                        404 -> setError("No se encontraron compras")
-                        500 -> setError("Error interno del servidor")
-                        else -> setError("Error al cargar el historial: ${response.code()}")
+                        403 -> setError(application.getString(R.string.no_permission))
+                        404 -> setError(application.getString(R.string.no_purchases_found))
+                        500 -> setError(application.getString(R.string.server_error))
+                        else -> setError(application.getString(R.string.history_load_error, response.code()))
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error en loadHistorialCompras: ${e.message}", e)
-                setError("Error de conexión: ${e.message}")
+                setError(application.getString(R.string.connection_error, e.message))
             } finally {
                 isLoading = false
             }
@@ -159,13 +160,13 @@ class HistorialComprasViewModel(
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !hasWriteStoragePermission()) {
                     _permissionNeeded.value = Manifest.permission.WRITE_EXTERNAL_STORAGE
                     _isDownloadingPdf.value = false
-                    _downloadMessage.value = "Se necesita permiso para guardar archivos"
+                    _downloadMessage.value = application.getString(R.string.permission_needed_to_save)
                     return@launch
                 }
                 
                 val token = SessionManager.getToken()
                 if (token.isNullOrEmpty()) {
-                    _downloadMessage.value = "No se ha iniciado sesión"
+                    _downloadMessage.value = application.getString(R.string.no_session_started)
                     _shouldNavigateToLogin.value = true
                     return@launch
                 }
@@ -181,7 +182,7 @@ class HistorialComprasViewModel(
                 }
                 
                 if (generateResponse == null) {
-                    _downloadMessage.value = "Error de conexión al generar la factura"
+                    _downloadMessage.value = application.getString(R.string.invoice_generation_error)
                     return@launch
                 }
                 
@@ -190,13 +191,13 @@ class HistorialComprasViewModel(
                     Log.e(TAG, "Error al generar factura: $errorBody")
                     when (generateResponse.code()) {
                         401 -> {
-                            _downloadMessage.value = "Sesión expirada"
+                            _downloadMessage.value = application.getString(R.string.session_expired)
                             _shouldNavigateToLogin.value = true
                         }
-                        403 -> _downloadMessage.value = "Sin permiso"
-                        404 -> _downloadMessage.value = "Compra no encontrada"
-                        500 -> _downloadMessage.value = "Error del servidor"
-                        else -> _downloadMessage.value = "Error: ${generateResponse.code()}"
+                        403 -> _downloadMessage.value = application.getString(R.string.no_permission)
+                        404 -> _downloadMessage.value = application.getString(R.string.purchase_not_found)
+                        500 -> _downloadMessage.value = application.getString(R.string.server_error)
+                        else -> _downloadMessage.value = application.getString(R.string.error_code, generateResponse.code())
                     }
                     return@launch
                 }
@@ -204,7 +205,7 @@ class HistorialComprasViewModel(
                 // Obtener el ID de la factura de la respuesta
                 val facturaResponse = generateResponse.body()
                 if (facturaResponse == null) {
-                    _downloadMessage.value = "Error: Respuesta de factura vacía"
+                    _downloadMessage.value = application.getString(R.string.empty_invoice_response_error)
                     return@launch
                 }
                 
@@ -222,7 +223,7 @@ class HistorialComprasViewModel(
                 }
                 
                 if (response == null) {
-                    _downloadMessage.value = "Error de conexión al servidor"
+                    _downloadMessage.value = application.getString(R.string.server_connection_error)
                     return@launch
                 }
                 
@@ -235,7 +236,7 @@ class HistorialComprasViewModel(
                             Log.d(TAG, "Tipo de contenido recibido: $contentType")
                             
                             if (contentType?.contains("application/pdf") != true) {
-                                _downloadMessage.value = "Error: El servidor no devolvió un PDF válido"
+                                _downloadMessage.value = application.getString(R.string.invalid_pdf_error)
                                 return@launch
                             }
                             
@@ -273,7 +274,7 @@ class HistorialComprasViewModel(
                                             
                                             // Verificar que se escribieron bytes
                                             if (totalBytes == 0L) {
-                                                throw Exception("El archivo descargado está vacío")
+                                                throw Exception(application.getString(R.string.empty_file_error))
                                             }
                                         }
                                     }
@@ -317,7 +318,7 @@ class HistorialComprasViewModel(
                             Log.d(TAG, "URI de FileProvider: $fileProviderUri")
                             
                             // Notificar al usuario
-                            _downloadMessage.value = "Factura descargada correctamente"
+                            _downloadMessage.value = application.getString(R.string.invoice_downloaded_successfully)
                             
                             // Abrir el PDF automáticamente con un intent
                             val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
@@ -330,33 +331,33 @@ class HistorialComprasViewModel(
                                 context.startActivity(intent)
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error al abrir PDF: ${e.message}", e)
-                                _downloadMessage.value = "Factura guardada en Descargas. No se pudo abrir automáticamente."
+                                _downloadMessage.value = application.getString(R.string.invoice_saved_in_downloads)
                             }
                             
                         } catch (e: Exception) {
                             Log.e(TAG, "Error al guardar el archivo: ${e.message}", e)
-                            _downloadMessage.value = "Error al guardar la factura: ${e.message}"
+                            _downloadMessage.value = application.getString(R.string.save_invoice_error, e.message)
                         }
                     } else {
-                        _downloadMessage.value = "Error: Respuesta vacía del servidor"
+                        _downloadMessage.value = application.getString(R.string.empty_server_response_error)
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Log.e(TAG, "Error en la respuesta: $errorBody")
                     when (response.code()) {
                         401 -> {
-                            _downloadMessage.value = "Sesión expirada"
+                            _downloadMessage.value = application.getString(R.string.session_expired)
                             _shouldNavigateToLogin.value = true
                         }
-                        403 -> _downloadMessage.value = "Sin permiso"
-                        404 -> _downloadMessage.value = "Factura no encontrada"
-                        500 -> _downloadMessage.value = "Error del servidor"
-                        else -> _downloadMessage.value = "Error: ${response.code()}"
+                        403 -> _downloadMessage.value = application.getString(R.string.no_permission)
+                        404 -> _downloadMessage.value = application.getString(R.string.invoice_not_found_error)
+                        500 -> _downloadMessage.value = application.getString(R.string.server_error)
+                        else -> _downloadMessage.value = application.getString(R.string.error_code, response.code())
                     }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error al descargar factura: ${e.message}", e)
-                _downloadMessage.value = "Error al descargar: ${e.message}"
+                _downloadMessage.value = application.getString(R.string.download_error, e.message)
             } finally {
                 _isDownloadingPdf.value = false
             }

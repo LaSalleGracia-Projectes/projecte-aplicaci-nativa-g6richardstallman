@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -48,7 +49,7 @@ fun ForgotPasswordScreen(
             
             // Título principal
             Text(
-                text = "Recuperar Contraseña",
+                text = stringResource(id = R.string.recover_password),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -58,7 +59,7 @@ fun ForgotPasswordScreen(
             
             // Texto explicativo
             Text(
-                text = "Introduce tu correo electrónico y tu DNI o teléfono para recuperar tu contraseña",
+                text = stringResource(id = R.string.recover_password_explanation),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 textAlign = TextAlign.Center,
@@ -69,7 +70,7 @@ fun ForgotPasswordScreen(
             OutlinedTextField(
                 value = viewModel.email,
                 onValueChange = { viewModel.onEmailChange(it) },
-                label = { Text("Correo Electrónico") },
+                label = { Text(stringResource(id = R.string.email)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -90,7 +91,7 @@ fun ForgotPasswordScreen(
             OutlinedTextField(
                 value = viewModel.identificador,
                 onValueChange = { viewModel.onIdentificadorChange(it) },
-                label = { Text("DNI o Teléfono") },
+                label = { Text(stringResource(id = R.string.dni_or_phone)) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
@@ -129,7 +130,7 @@ fun ForgotPasswordScreen(
                     )
                 } else {
                     Text(
-                        text = "Recuperar Contraseña",
+                        text = stringResource(id = R.string.recover_password),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -158,7 +159,7 @@ fun ForgotPasswordScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Tu contraseña es:",
+                            text = stringResource(id = R.string.your_password_is),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             ),
@@ -185,7 +186,7 @@ fun ForgotPasswordScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
                 Text(
-                    text = "Volver a Iniciar Sesión",
+                    text = stringResource(id = R.string.back_to_login),
                     color = Color(0xFFE53935),
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Medium
@@ -231,7 +232,7 @@ fun ForgotPasswordScreen(
                 confirmButton = {
                     TextButton(onClick = { viewModel.setError(null) }) {
                         Text(
-                            text = "Aceptar",
+                            text = stringResource(id = R.string.accept),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold
                             ),

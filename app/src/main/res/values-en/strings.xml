@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">app</string>
+    
+    <!-- Commons -->
+    <string name="back">Back</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading...</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="accept">Accept</string>
+    <string name="confirm">Confirm</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="unknown_event">Unknown event</string>
+    <string name="downloading">DOWNLOADING...</string>
+    <string name="invoice_downloaded">INVOICE DOWNLOADED</string>
+    <string name="invoice_downloaded_successfully">Invoice downloaded successfully</string>
+    <string name="permission_denied_invoice">Permission denied. The invoice cannot be saved.</string>
+    <string name="no_purchases_yet">You haven\'t made any purchases yet</string>
+    <string name="restarting_activity_language">Restarting activity to apply language: %1$s</string>
+    <string name="error_activity_not_found">Could not get activity to restart</string>
+    <string name="applying_language">Applying language: %1$s</string>
+    
+    <!-- Favorites -->
+    <string name="my_favorites">MY FAVORITES</string>
+    <string name="reload_favorites">Reload favorites</string>
+    <string name="events_tab">Events</string>
+    <string name="organizers_tab">Organizers</string>
+    <string name="no_favorite_events">You have no favorite events</string>
+    <string name="no_favorite_organizers">You have no favorite organizers</string>
+    <string name="explore_events">Explore events</string>
+    <string name="organizers_favorites_count">Favorite organizers: %1$d</string>
+    <string name="update_favorites">Update favorites</string>
+    <string name="organizers_explanation">Explore events to find organizers you\'re interested in and mark them as favorites.</string>
+    <string name="event_image">Event image</string>
+    <string name="refresh">Refresh</string>
+    <string name="not_available">Not available</string>
+    <string name="free">Free</string>
+    <string name="favorite_events">Favorite events</string>
+    <string name="favorite_organizers">Favorite organizers</string>
+    <string name="add_favorite">Add to favorites</string>
+    <string name="remove_favorite">Remove from favorites</string>
+    <string name="empty_favorites">You have no favorites</string>
+    <string name="favorite">Favorite</string>
+    <string name="organizer_avatar_desc">%1$s\'s avatar</string>
+    <string name="default_avatar">Default avatar</string>
+    <string name="organizer_phone">Phone: %1$s</string>
+    
+    <!-- Logs -->
+    <string name="app_initialized_correctly">Application initialized correctly</string>
+    <string name="initializing_session_manager">Initializing SessionManager...</string>
+    <string name="session_manager_initialized">SessionManager initialized correctly</string>
+    <string name="initializing_token_manager">Initializing TokenManager...</string>
+    <string name="token_manager_initialized">TokenManager initialized correctly</string>
+    <string name="language_loaded">Language loaded: %1$s</string>
+    <string name="error_initializing_managers">Error initializing managers: %1$s</string>
+    
+    <!-- Login and registration -->
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="forgot_password">Forgot your password?</string>
+    <string name="reset_password">Reset password</string>
+    <string name="no_account">Don\'t have an account?</string>
+    <string name="name">Name</string>
+    <string name="surname">Surname</string>
+    <string name="confirm_password">Confirm password</string>
+    
+    <!-- Main navigation -->
+    <string name="home">Home</string>
+    <string name="profile">Profile</string>
+    <string name="favorites">Favorites</string>
+    <string name="events">Events</string>
+    <string name="my_events">My events</string>
+    <string name="my_tickets">My tickets</string>
+    <string name="purchase_history">Purchase history</string>
+    <string name="settings">Settings</string>
+    <string name="logout">Logout</string>
+    
+    <!-- Events -->
+    <string name="event_detail">Event details</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="location">Location</string>
+    <string name="description">Description</string>
+    <string name="price">Price</string>
+    <string name="buy_tickets">Buy tickets</string>
+    <string name="available_tickets">Available tickets</string>
+    <string name="select_tickets">Select tickets</string>
+    <string name="total">Total</string>
+    <string name="purchase">Purchase</string>
+    <string name="create_event">CREATE EVENT</string>
+    <string name="edit_event">EDIT EVENT</string>
+    <string name="event_name">Event name</string>
+    <string name="event_category">Category</string>
+    <string name="upload_image">Upload image</string>
+    <string name="event_capacity">Capacity</string>
+    <string name="organizer">Organizer</string>
+    
+    <!-- Purchases and tickets -->
+    <string name="my_purchases">MY PURCHASES</string>
+    <string name="purchase_details">Purchase details</string>
+    <string name="purchase_date">Purchase date</string>
+    <string name="purchase_status">Status</string>
+    <string name="purchase_amount">Amount</string>
+    <string name="download_invoice">DOWNLOAD INVOICE</string>
+    <string name="tickets">Tickets</string>
+    <string name="scan_ticket">Scan ticket</string>
+    <string name="ticket_valid">Valid ticket</string>
+    <string name="ticket_used">Ticket already used</string>
+    <string name="ticket_invalid">Invalid ticket</string>
+    
+    <!-- Ticket purchase -->
+    <string name="buy_tickets_title">BUY TICKETS</string>
+    <string name="select_your_tickets">Select your tickets</string>
+    <string name="selected_tickets">Selected tickets: %1$d</string>
+    <string name="buy_now">BUY NOW</string>
+    <string name="select_at_least_one_ticket">Select at least one ticket to continue</string>
+    <string name="general_ticket">General Admission</string>
+    <string name="unlimited_tickets">Unlimited tickets</string>
+    <string name="available_tickets_count">Available: %1$d</string>
+    <string name="availability_not_specified">Availability not specified</string>
+    <string name="decrease">Decrease</string>
+    <string name="increase">Increase</string>
+    <string name="confirm_purchase">Confirm Purchase</string>
+    <string name="successful_purchase">Successful Purchase!</string>
+    <string name="processing_purchase">Processing your purchase...</string>
+    <string name="total_to_pay">Total to pay: %1$s</string>
+    <string name="close">Close</string>
+    <string name="confirm_button">Confirm</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="invalid_event_id">Invalid event ID: %1$s</string>
+    <string name="event_info_not_found">Event information not found</string>
+    <string name="event_has_tickets_types">This event has %1$d ticket type(s)</string>
+    <string name="buy_button">BUY</string>
+    
+    <!-- Profile -->
+    <string name="edit_profile">Edit profile</string>
+    <string name="edit_profile_action">Edit profile</string>
+    <string name="change_password">Change password</string>
+    <string name="current_password">Current password</string>
+    <string name="new_password">New password</string>
+    <string name="save_changes">Save changes</string>
+    <string name="personal_data">Personal data</string>
+    <string name="profile_picture">Profile picture</string>
+    <string name="my_profile">MY PROFILE</string>
+    <string name="participant">Participant</string>
+    <string name="role">Role</string>
+    <string name="view_purchase_history">VIEW PURCHASE HISTORY</string>
+    
+    <!-- Languages -->
+    <string name="language">Language</string>
+    <string name="spanish">Spanish</string>
+    <string name="english">English</string>
+    <string name="catalan">Catalan</string>
+    <string name="change_language">Change language</string>
+    <string name="select_language">Select language</string>
+    
+    <!-- EventosScreen -->
+    <string name="events_title">EVENTS</string>
+    <string name="search_events">Search events</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_events_in_category">No events in this category</string>
+    
+    <!-- ForgotPasswordScreen -->
+    <string name="recover_password">Recover Password</string>
+    <string name="recover_password_explanation">Enter your email and ID or phone number to recover your password</string>
+    <string name="dni_or_phone">ID or Phone</string>
+    <string name="your_password_is">Your password is:</string>
+    <string name="back_to_login">Back to Login</string>
+    
+    <!-- LoginScreen -->
+    <string name="or">Or</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="create_account">Create Account</string>
+    <string name="copyright">© 2025 EventFlix. All rights reserved.</string>
+    <string name="error">Error</string>
+    
+    <!-- HistorialComprasScreen y MisTicketsScreen -->
+    <string name="download_ticket">Download ticket</string>
+    <string name="ticket_downloaded">Ticket downloaded</string>
+    <string name="downloading_ticket">Downloading ticket...</string>
+    <string name="add_to_calendar">Add to calendar</string>
+    <string name="calendar">Calendar</string>
+    <string name="permission_needed">Permissions needed</string>
+    <string name="calendar_permissions_explanation">To add events to the calendar, you need:\n1. To be signed in with a Google account on the device\n2. Grant permissions to access the calendar</string>
+    <string name="calendar_will_allow">This will allow the app to create events in your Google Calendar.</string>
+    <string name="grant_permissions">Grant permissions</string>
+    <string name="google_account_required">Google Account required</string>
+    <string name="no_google_account_found">No valid Google account was found on the device.</string>
+    <string name="google_account_needed">To add events to the calendar, you need to sign in with a Google account in your device settings.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="calendar_permissions_required">Calendar permissions are required for this function</string>
+    <string name="settings_open_error">Could not open account settings</string>
+    <string name="no_tickets">You have no tickets</string>
+    <string name="buy_events_tickets">Buy tickets for available events!</string>
+    <string name="view_available_events">View available events</string>
+    
+    <!-- MisEventosScreen -->
+    <string name="my_events_title">MY EVENTS</string>
+    <string name="delete_event">Delete event</string>
+    <string name="delete_event_confirmation">Are you sure you want to delete the event %1$s? This action cannot be undone.</string>
+    <string name="no_events_created">You haven\'t created any events yet</string>
+    <string name="create_first_event">Create my first event</string>
+    <string name="error_opening_edit">Error opening edit screen: %1$s</string>
+    <string name="organizers_only">This section is only available for organizers.</string>
+    
+    <!-- ProfileScreen -->
+    <string name="session_expired">Your session has expired. Please log in again</string>
+    <string name="profile_load_error">Could not load profile information</string>
+    <string name="personal_information">Personal Information</string>
+    <string name="not_specified">Not specified</string>
+    <string name="change_password_title">CHANGE PASSWORD</string>
+    <string name="delete_account_title">DELETE ACCOUNT</string>
+    
+    <!-- HistorialComprasViewModel -->
+    <string name="no_session_started">No active session</string>
+    <string name="server_connection_error">Server connection error</string>
+    <string name="could_not_get_purchases">Could not get purchases</string>
+    <string name="no_permission">You don\'t have permission to access this information</string>
+    <string name="no_purchases_found">No purchases found</string>
+    <string name="server_error">Internal server error</string>
+    <string name="history_load_error">Error loading history: %1$d</string>
+    <string name="connection_error">Connection error: %1$s</string>
+    <string name="permission_needed_to_save">Permission needed to save files</string>
+    <string name="invoice_generation_error">Connection error while generating invoice</string>
+    <string name="purchase_not_found">Purchase not found</string>
+    <string name="error_code">Error: %1$d</string>
+    <string name="empty_invoice_response_error">Error: Empty invoice response</string>
+    <string name="invalid_pdf_error">Error: The server did not return a valid PDF</string>
+    <string name="empty_file_error">The downloaded file is empty</string>
+    <string name="invoice_saved_in_downloads">Invoice saved in Downloads. Could not open automatically.</string>
+    <string name="save_invoice_error">Error saving invoice: %1$s</string>
+    <string name="empty_server_response_error">Error: Empty server response</string>
+    <string name="invoice_not_found_error">Invoice not found</string>
+    <string name="download_error">Download error: %1$s</string>
+    
+    <!-- Event categories -->
+    <string name="categoria_arte_cultura">Art and Culture</string>
+    <string name="categoria_belleza_bienestar">Beauty and Wellness</string>
+    <string name="categoria_charlas_conferencias">Talks and Conferences</string>
+    <string name="categoria_cine">Cinema</string>
+    <string name="categoria_comedia">Comedy</string>
+    <string name="categoria_conciertos">Concerts</string>
+    <string name="categoria_deportes">Sports</string>
+    <string name="categoria_discoteca">Nightclub</string>
+    <string name="categoria_educacion">Education</string>
+    <string name="categoria_empresarial">Business</string>
+    <string name="categoria_exposiciones">Exhibitions</string>
+    <string name="categoria_familiar">Family</string>
+    <string name="categoria_festivales">Festivals</string>
+    <string name="categoria_gastronomia">Gastronomy</string>
+    <string name="categoria_infantil">Children</string>
+    <string name="categoria_moda">Fashion</string>
+    <string name="categoria_musica_directo">Live Music</string>
+    <string name="categoria_networking">Networking</string>
+    <string name="categoria_ocio_nocturno">Nightlife</string>
+    <string name="categoria_politica">Politics</string>
+    <string name="categoria_religion">Religion</string>
+    <string name="categoria_restaurantes">Restaurants</string>
+    <string name="categoria_salud_deporte">Health and Sport</string>
+    <string name="categoria_solidaridad">Solidarity</string>
+    <string name="categoria_tecnologia">Technology</string>
+    <string name="categoria_teatro">Theater</string>
+    <string name="categoria_turismo">Tourism</string>
+    <string name="categoria_varios">Miscellaneous</string>
+    <string name="categoria_presentaciones">Presentations</string>
+    <string name="categoria_seminarios">Seminars</string>
+    <string name="categoria_talleres">Workshops</string>
+    
+    <!-- User registration -->
+    <string name="register_user_title">User Registration</string>
+    <string name="first_surname">First Surname</string>
+    <string name="second_surname">Second Surname</string>
+    <string name="password_requirements_title">Password requirements:</string>
+    <string name="password_requirement_8_chars">• At least 8 characters</string>
+    <string name="password_requirement_upper">• At least one uppercase letter</string>
+    <string name="password_requirement_lower">• At least one lowercase letter</string>
+    <string name="password_requirement_digit">• At least one digit</string>
+    <string name="password_requirement_special">• At least one special character</string>
+    <string name="show_password_requirements">Password requirements</string>
+    <string name="hide_password">Hide password</string>
+    <string name="show_password">Show password</string>
+    <string name="select_role">Select your role</string>
+    <string name="role_organizer">Organizer</string>
+    <string name="role_participant">Participant</string>
+    <string name="complete_all_fields">Fill in all fields correctly to continue</string>
+    <string name="register_summary">Registration Summary</string>
+    <string name="register_as_participant">REGISTER AS PARTICIPANT</string>
+    <string name="register_as_organizer">REGISTER AS ORGANIZER</string>
+    <string name="organizer_info">Organizer Information</string>
+    <string name="organizer_registration_success">Your organizer account has been created successfully.</string>
+    <string name="organization_name">Organization name</string>
+    <string name="contact_phone">Contact phone</string>
+    <string name="organization_type">Organization type</string>
+    <string name="organization_description">Organization description</string>
+    <string name="organization_logo">Organization logo</string>
+    <string name="select_organization_logo">Select logo</string>
+    <string name="phone_invalid">Must contain 9 digits</string>
+    <string name="participant_avatar">Participant avatar</string>
+    <string name="participant_registration_success">Your account has been created successfully. You will be redirected to the login screen.</string>
+    <string name="registration_success_title">Registration Successful!</string>
+    <string name="continue_to_login">CONTINUE TO LOGIN</string>
+    <string name="already_have_account">Already have an account? Sign in</string>
+    
+    <string name="profile_updated_successfully">Profile updated successfully</string>
+    <string name="delete_account_warning">This action cannot be undone. All your data will be permanently deleted.</string>
+    <string name="deleting_account">Deleting account...</string>
+    <string name="account_deleted_successfully">Account deleted successfully</string>
+    <string name="thank_you_for_using_app">Thank you for using our app</string>
+    <string name="profile_and_personal_data">Your profile and personal data</string>
+    <string name="purchase_history_and_invoices">Purchase history and invoices</string>
+    <string name="organization_data">Organization data</string>
+    <string name="entry_types">Ticket types</string>
+    <string name="delete_account_warning_again">This action cannot be undone.</string>
+    <string name="delete_account">Delete account</string>
+    <string name="password_updated_successfully">Your password has been updated successfully</string>
+    <string name="event_title_label">Event title*</string>
+    <string name="set_date_time">Set date and time</string>
+    <string name="set_event_location">Set location</string>
+    <string name="use_gallery">Use gallery</string>
+    <string name="use_camera">Use camera</string>
+    <string name="how_to_add_image">How do you want to add an image?</string>
+    <string name="no_image">No image</string>
+    <string name="camera">Camera</string>
+    <string name="cannot_select_past_date">You cannot select a past date</string>
+    <string name="cannot_select_past_time">You cannot select a past time for today</string>
+    <string name="is_event_online">Is the event online?</string>
+    <string name="continue_to_tickets">CONTINUE TO TICKETS</string>
+    <string name="add_at_least_one_ticket_type">Add at least one ticket type for your event</string>
+    <string name="ticket_type">Ticket type %1$d</string>
+    <string name="ticket_type_name">Name</string>
+    <string name="ticket_type_price">Price (€)</string>
+    <string name="unlimited">Unlimited</string>
+    <string name="available_quantity">Available quantity</string>
+    <string name="add_ticket_type">Add ticket type</string>
+    <string name="create_event_button">CREATE EVENT</string>
+    <string name="event_created_successfully">Event created successfully</string>
+    <string name="validation_errors_detected">The following issues were detected:</string>
+    <string name="validation_error_date">• Date: The date must be after today</string>
+    <string name="validation_error_online">• Online: The field must be true or false</string>
+    <string name="validation_error_ticket_types">• Ticket types: Incorrect format, must be an array</string>
+    <string name="validation_error_name">• Name: The ticket type name is required</string>
+    <string name="validation_error_price">• Price: The ticket type price is required</string>
+    <string name="validation_error_unlimited">• Unlimited: You must specify if the tickets are unlimited</string>
+    <string name="delete_ticket_type">Delete ticket type</string>
+    <string name="gallery">Gallery</string>
+    <string name="event_title_placeholder">Event title</string>
+    <string name="event_description_placeholder">Describe your event</string>
+    <string name="event_date_placeholder">Event date</string>
+    <string name="event_time_placeholder">Event time</string>
+    <string name="event_location_placeholder">E.g. Municipal Stadium</string>
+    <string name="event_category_placeholder">Select a category</string>
+    <string name="event_capacity_placeholder">Event capacity</string>
+    <string name="select_event_image_optional">Select an image for your event (optional)</string>
+    <string name="is_online">Online</string>
+    <string name="in_person">In person</string>
+    <string name="yes_lowercase">yes</string>
+    <string name="no_lowercase">no</string>
+    <string name="edit_or_add_ticket_types">Edit or add ticket types for your event</string>
+    <string name="event_updated_successfully">Event updated successfully</string>
+    <string name="event_description_label">Description*</string>
+    <string name="event_date_label">Event date</string>
+    <string name="event_time_label">Event time</string>
+    <string name="event_location_label">Location</string>
+    <string name="event_category_label">Category</string>
+    <string name="add_event_image">Add event image</string>
+    <string name="select_image">Select image</string>
+    <string name="take_photo">Take photo</string>
+    <string name="event_online">Online event</string>
+    <string name="ticket_types_section">TICKET TYPES</string>
+    <string name="ticket_type_description">Description (optional)</string>
+    <string name="error_creating_event">Error creating event:</string>
+    <string name="select_date">Select date</string>
+    <string name="select_time">Select time</string>
+    <string name="basic_info_section">BASIC INFORMATION</string>
+    <string name="event_image_section">EVENT IMAGE</string>
+    <string name="change_image">Change image</string>
+    <string name="add_event_image_text">Add event image</string>
+    <string name="event_type_section">EVENT TYPE</string>
+    <string name="organizer_data_title">Organizer Data</string>
+    <string name="participant_data_title">Participant Data</string>
+    <string name="basic_information">Basic Information</string>
+    <string name="dni_label">ID (8 digits + letter)</string>
+    <string name="dni_invalid">Invalid ID. Format: 12345678A</string>
+    <string name="dni_format_hint">The correct format is: 12345678A</string>
+    <string name="phone_label">Phone (9 digits)</string>
+    <string name="phone_digits_left">Missing %1$d digits</string>
+    <string name="complete_registration">Complete Registration</string>
+    <string name="done">Done</string>
+</resources> 
