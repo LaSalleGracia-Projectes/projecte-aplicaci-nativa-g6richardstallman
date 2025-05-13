@@ -20,7 +20,7 @@
   <img src="logo.png" alt="EventApp Logo" width="120" height="120">
 </div>
 
-# 🎫 EventApp - Aplicación de Gestión de Eventos
+# 🎫 Eventflix
 
 ## 📱 Sobre el Proyecto
 
