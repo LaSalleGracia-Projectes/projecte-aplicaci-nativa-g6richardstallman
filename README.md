@@ -1,3 +1,25 @@
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a name="readme-top"></a>
+<!--
+*** Gracias por revisar esta plantilla de README. Si tienes sugerencias para mejorarla, haz un fork del repositorio y crea un pull request o abre un issue con la etiqueta "enhancement".
+*** ¡No olvides darle una estrella al proyecto!
+*** ¡Gracias de nuevo! ¡Ahora ve y crea algo INCREÍBLE! :D
+-->
+
+<!-- PROJECT SHIELDS -->
+<!--
+*** Uso de enlaces de referencia en markdown para mayor legibilidad.
+*** Los enlaces de referencia están entre corchetes [ ] en vez de paréntesis ( ).
+*** Consulta la declaración de variables de referencia al final de este documento.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <img src="README/images/logo.png" alt="EventApp Logo" width="120" height="120">
+</div>
+
 # 🎫 EventApp - Aplicación de Gestión de Eventos
 
 ## 📱 Sobre el Proyecto
@@ -236,35 +258,11 @@ app/
 - **Observer Pattern**
 - **Builder Pattern**
 
-## 🔐 Seguridad
-
-### Medidas Implementadas
-- **Autenticación:**
-  - JWT con renovación automática
-  - Almacenamiento seguro de tokens
-  - Biometric authentication
-  
-- **Datos Sensibles:**
-  - Encriptación AES-256
-  - Secure SharedPreferences
-  - ProGuard/R8 optimización
-  
-- **Red:**
-  - Certificate Pinning
-  - HTTPS obligatorio
-  - Validación de certificados
-
-### Buenas Prácticas
-- Sanitización de inputs
-- Prevención de inyección SQL
-- Rate limiting
-- Logging seguro
-
 ## 🌐 API y Endpoints
 
-### Base URL
+### Base URL (no deployada está en localhost)
 ```
-https://api.eventapp.com/v1/
+https://127.0.0.1;8000/
 ```
 
 ### Endpoints Principales
@@ -294,10 +292,6 @@ GET /tickets/{id}
 POST /tickets/{id}/transfer
 ```
 
-## 📱 Capturas de Pantalla y Diseño
-
-### Pantallas Principales
-[Aquí se incluirían las capturas de pantalla organizadas por sección]
 
 ### Guía de Estilos
 - **Colores:**
@@ -335,49 +329,41 @@ POST /tickets/{id}/transfer
 - Feature/*: Nuevas características
 - Hotfix/*: Correcciones urgentes
 
-## ✅ Testing
+# 🚀 Guía de Despliegue
 
-### Tipos de Tests
-- **Unitarios:** JUnit, Mockito
-- **Integración:** Espresso
-- **UI:** Compose Testing
-- **End-to-End:** Maestro
-
-### Cobertura de Código
-- Mínimo 80% en lógica de negocio
-- Reportes automáticos en CI/CD
-
-## 📈 Análisis y Monitoreo
-
-### Herramientas
-- Firebase Analytics
-- Crashlytics
-- Performance Monitoring
-- Google Analytics
-
-### Métricas Principales
-- Tiempo de inicio
-- Tasa de errores
-- Uso de memoria
-- Rendimiento de red
+1. **Clona el repositorio backend (no deploy):**
+   ```bash
+   git clone https://github.com/LaSalleGracia-Projectes/projecte-aplicaci-web-servidor-g6richardstallman.git
+   cd projecte-aplicaci-web-servidor-g6richardstallman 
+   // para ver su despliegue dirigete a https://github.com/LaSalleGracia-Projectes projecte-aplicaci-web-servidor-g6richardstallman.git
+   ```
+2. **Instala el repositorio este:**
+   ```bash
+   git clone https://github.com/LaSalleGracia-Projectes/projecte-aplicaci-nativa-g6richardstallman
+   cd projecte-aplicaci-nativa-g6richardstallman
+   ```
+3. **Genera el APK de la aplicación Android:**
+   
+   Abre una terminal en la raíz del proyecto nativo y ejecuta:
+   ```bash
+   ./gradlew assembleRelease
+   ```
+   El archivo APK generado se encontrará en:
+   ```
+   app/build/outputs/apk/release/app-release.apk
+   ```
+   Puedes instalar este APK en tu dispositivo Android o distribuirlo según tus necesidades.
 
 ## ✍️ Autores
 
-- **Yago Alonso** - *Frontend Developer* - [GitHub](https://github.com/tuusuario)
-  - Especializado en UI/UX y arquitectura
-  - Líder técnico del proyecto
+- **Yago Alonso** - *Frontend Developer* - [GitHub](https://github.com/yagoalonso1)
 
-- **Arnau Gil** - *Frontend Developer* - [GitHub](https://github.com/tuusuario)
-  - Experto en integración de APIs
-  - Desarrollo de funcionalidades core
+- **Arnau Gil** - *Frontend Developer* - [GitHub](https://github.com/XxArnauxX)
 
-- **Alex Vilanova** - *Frontend Developer* - [GitHub](https://github.com/tuusuario)
-  - Especialista en testing y seguridad
-  - Optimización de rendimiento
-
+- **Alex Vilanova** - *Frontend Developer* - [GitHub](https://github.com/avilanova05)
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.md) para detalles
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.txt](LICENSE.txt) para detalles
 
 ### Términos Principales
 - Uso comercial permitido
@@ -402,12 +388,6 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
   - Beta testers
   - Usuarios iniciales
 
-## 📞 Soporte y Contacto
-
-### Canales de Soporte
-- Email: support@eventapp.com
-- Discord: [EventApp Community]
-- Twitter: @EventApp
 
 ### Reportar Problemas
 - Usar GitHub Issues
@@ -417,4 +397,6 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE.md](LICENSE.m
 ---
 Desarrollado con ❤️ por Yago Alonso, Arnau Gil y Alex Vilanova
 
-[Última actualización: 2024] 
+[Última actualización: 2025] 
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p> 
