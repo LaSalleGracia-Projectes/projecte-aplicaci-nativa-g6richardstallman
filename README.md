@@ -24,7 +24,7 @@
 
 ## 📱 Sobre el Proyecto
 
-EventApp es una aplicación móvil moderna desarrollada en Kotlin con Jetpack Compose que permite a los usuarios gestionar, comprar y organizar eventos de manera intuitiva y eficiente. La aplicación ofrece una experiencia de usuario fluida y moderna, siguiendo las últimas tendencias en diseño de Material Design 3.
+Eventflix es una aplicación móvil moderna desarrollada en Kotlin con Jetpack Compose que permite a los usuarios gestionar, comprar y organizar eventos de manera intuitiva y eficiente. La aplicación ofrece una experiencia de usuario fluida y moderna, siguiendo las últimas tendencias en diseño de Material Design 3.
 
 ### 🎯 Objetivos del Proyecto
 
